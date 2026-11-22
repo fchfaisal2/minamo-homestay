@@ -245,16 +245,8 @@
     let dataPengeluaran = [];
 	
 	function bukaMenuUtama() {
-		try {
-			const winMenu = window.open("menu.html", "minamo_menu");
-			if (winMenu) {
-			winMenu.focus();
-			return false;
-			}
-		} catch (err) {
-			console.warn("Gagal memfokuskan tab menu:", err);
-		}
-		return true;
+  		window.location.href = "menu.html";
+  		return false;
 	}
 
     function getTanggalHariIniYMD() {
