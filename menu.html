@@ -143,7 +143,7 @@
           <div class="menu-title">Reservasi</div>
           <div class="menu-desc">Form pemesanan kamar, hitung total malam &amp; DP tamu.</div>
         </div>
-        <span class="menu-btn">Buka Reservasi ↗</span>
+        <span class="menu-btn" onclick="bukaHalaman('index.html')">Buka Reservasi ↗</span>
       </a>
 
       <a href="admin.html" target="minamo_resepsionis" class="menu-card resepsionis">
@@ -181,11 +181,11 @@
   </div>
   
   <script>
-  try {
-    window.name = "minamo_menu";
-  } catch (err) {
-    console.warn("Tidak dapat mengatur nama tab:", err);
-  }
+    
+      function bukaHalaman(namaFile) {
+      window.location.href = namaFile;
+      }
+    
 </script>
 
 </body>
