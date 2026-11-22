@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan Keuangan - MINAMO HOMESTAY</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 25px auto; padding: 0 15px; color: #111827; }
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .top-nav-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-home {
+      display: inline-block;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-home:hover { background: #cbd5e1; }
+    .receptionist-badge {
+      font-size: 13px;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .receptionist-badge:hover {
+      background: #e2e8f0;
+    }
+    .receptionist-badge strong {
+      color: #0f172a;
+    }
+    button { background: #16a34a; color: white; border: none; padding: 7px 12px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+    button:hover { background: #15803d; }
+    .btn-primary { background: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #4b5563; }
+    .btn-secondary:hover { background: #374151; }
+    .btn-print { background: #0f766e; }
+    .btn-print:hover { background: #115e59; }
+
+    .header-laporan {
+      margin-bottom: 14px;
+    }
+    .header-laporan h2 {
+      margin: 0 0 4px;
+    }
+    .alamat-homestay {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .laporan-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+    .laporan-box h3 { margin: 0 0 12px; font-size: 16px; }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .filter-group input {
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .ringkasan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .kartu-stat {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .kartu-stat.keuntungan {
+      border-width: 2px;
+    }
+    .kartu-stat small { color: #64748b; display: block; margin-bottom: 6px; font-size: 13px; }
+    .kartu-stat strong { font-size: 20px; display: block; }
+    .kartu-stat span { font-size: 12px; color: #64748b; margin-top: 4px; display: block; }
+
+    .text-green { color: #16a34a; }
+    .text-red { color: #dc2626; }
+    .border-green { border-color: #16a34a !important; }
+    .border-red { border-color: #dc2626 !important; }
+
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+    .lunas-badge { background: #dcfce7; color: #166534; }
+    .kategori-badge { background: #e0f2fe; color: #0369a1; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 22px; min-width: 640px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #f3f4f6; }
+
+    .footer-note {
+      width: 100%;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { margin: 10px auto; max-width: 100%; }
+      .laporan-box, .kartu-stat { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav no-print">
+    <div class="top-nav-left">
+      <a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
+      
+      <button class="btn-primary" onclick="refreshDataLaporan()">Refresh Data</button>
+      <button class="btn-print" onclick="window.print()">Cetak Laporan</button>
+    </div>
+    <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
+      Receptionist: <strong id="nama_receptionist">Petugas</strong>
+    </div>
+  </div>
+
+  <div class="header-laporan">
+    <h2>MINAMO HOMESTAY — Laporan Keuangan</h2>
+    <div class="alamat-homestay">Jln. Sri Rezeki, Bulakan Balai Kandih Kota Payakumbuh</div>
+  </div>
+
+  <!-- Filter Tanggal & Ringkasan Keuntungan Bersih -->
+  <div class="laporan-box">
+    <h3>Filter Periode &amp; Ringkasan Keuntungan Bersih</h3>
+    <div class="filter-row no-print">
+      <div class="filter-group">
+        <label for="tgl_mulai">Dari Tanggal</label>
+        <input type="date" id="tgl_mulai" onchange="saatDariTanggalBerubah()" oninput="saatDariTanggalBerubah()" />
+      </div>
+      <div class="filter-group">
+        <label for="tgl_akhir">Sampai Tanggal</label>
+        <input type="date" id="tgl_akhir" onchange="saatSampaiTanggalBerubah()" oninput="saatSampaiTanggalBerubah()" />
+      </div>
+      <button class="btn-primary" onclick="hitungDanRender()">Terapkan</button>
+      <button class="btn-secondary" onclick="resetSemuaTanggal()">Semua Tanggal</button>
+    </div>
+
+    <div class="ringkasan-grid">
+      <div class="kartu-stat">
+        <small>Total Pemasukan (status_bayar: Lunas)</small>
+        <strong id="total_pemasukan" class="text-green">Rp 0</strong>
+        <span id="jumlah_lunas">0 transaksi Lunas</span>
+      </div>
+
+      <div class="kartu-stat">
+        <small>Total Pengeluaran (kolom nominal)</small>
+        <strong id="total_pengeluaran" class="text-red">Rp 0</strong>
+        <span id="jumlah_pengeluaran">0 catatan pengeluaran</span>
+      </div>
+
+      <div id="kartu_keuntungan" class="kartu-stat keuntungan border-green">
+        <small>Keuntungan Bersih (Pemasukan - Pengeluaran)</small>
+        <strong id="keuntungan_bersih" class="text-green">Rp 0</strong>
+        <span id="ket_keuntungan">Surplus bersih</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabel Rincian Pemasukan Status Bayar Lunas -->
+  <h3>Rincian Pemasukan (Tab Reservasi — status_bayar: Lunas)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Booking</th>
+          <th>Tanggal Acuan</th>
+          <th>Nama Tamu</th>
+          <th>Kamar</th>
+          <th>status_bayar</th>
+          <th>Jumlah Pemasukan</th>
+        </tr>
+      </thead>
+      <tbody id="tabelPemasukan">
+        <tr><td colspan="6">Memuat data pemasukan...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabel Rincian Pengeluaran -->
+  <h3>Rincian Pengeluaran (Tab Pengeluaran — kolom nominal)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pengeluaran</th>
+          <th>Tanggal</th>
+          <th>Kategori</th>
+          <th>Keterangan</th>
+          <th>Nominal</th>
+        </tr>
+      </thead>
+      <tbody id="tabelPengeluaran">
+        <tr><td colspan="5">Memuat data pengeluaran...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer-note">
+    MINAMO HOMESTAY • Terhubung ke Google Sheets<br />
+    Copyright @FCHFAISAL
+  </p>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
+    const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+    let dataReservasi = [];
+    let dataPengeluaran = [];
+	
+	function bukaMenuUtama() {
+		try {
+			const winMenu = window.open("menu.html", "minamo_menu");
+			if (winMenu) {
+			winMenu.focus();
+			return false;
+			}
+		} catch (err) {
+			console.warn("Gagal memfokuskan tab menu:", err);
+		}
+		return true;
+	}
+
+    function getTanggalHariIniYMD() {
+      const sekarang = new Date();
+      const tahun = sekarang.getFullYear();
+      const bulan = String(sekarang.getMonth() + 1).padStart(2, "0");
+      const hari = String(sekarang.getDate()).padStart(2, "0");
+      return `${tahun}-${bulan}-${hari}`;
+    }
+
+    function setDefaultTanggalHariIni() {
+      const hariIni = getTanggalHariIniYMD();
+      document.getElementById("tgl_mulai").value = hariIni;
+      document.getElementById("tgl_akhir").value = hariIni;
+    }
+	
+	function saatDariTanggalBerubah() {
+      const inputMulai = document.getElementById("tgl_mulai");
+      const inputAkhir = document.getElementById("tgl_akhir");
+
+      const valMulai = inputMulai.value;
+      const valAkhir = inputAkhir.value;
+
+      // 1. Jika Dari Tanggal lebih besar dari Sampai Tanggal,
+      //    maka Sampai Tanggal otomatis berubah menjadi sama dengan Dari Tanggal
+      if (valMulai && valAkhir && valMulai > valAkhir) {
+        inputAkhir.value = valMulai;
+      }      
+    }
+
+    function saatSampaiTanggalBerubah() {
+      const inputMulai = document.getElementById("tgl_mulai");
+      const inputAkhir = document.getElementById("tgl_akhir");
+
+      const valMulai = inputMulai.value;
+      const valAkhir = inputAkhir.value;
+
+      // 2. Jika Sampai Tanggal lebih kecil dari Dari Tanggal,
+      //    maka Dari Tanggal otomatis berubah menjadi sama dengan Sampai Tanggal
+      if (valMulai && valAkhir && valAkhir < valMulai) {
+        inputMulai.value = valAkhir;
+      }      
+    }
+
+    function muatNamaReceptionist() {
+      const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
+      const nama = (tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas";
+      document.getElementById("nama_receptionist").textContent = nama;
+      return nama;
+    }
+
+    function gantiReceptionist() {
+      const namaSaatIni = muatNamaReceptionist();
+      const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
+      if (inputBaru === null) return;
+      const namaBersih = inputBaru.trim() || "Petugas";
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
+      document.getElementById("nama_receptionist").textContent = namaBersih;
+    }
+
+    function formatRupiah(angka) {
+      return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+    }
+
+    function ekstrakTanggalYMD(nilaiTanggal) {
+      if (!nilaiTanggal && nilaiTanggal !== 0) return "";
+
+      if (nilaiTanggal instanceof Date && !isNaN(nilaiTanggal.getTime())) {
+        const thn = nilaiTanggal.getFullYear();
+        const bln = String(nilaiTanggal.getMonth() + 1).padStart(2, "0");
+        const hri = String(nilaiTanggal.getDate()).padStart(2, "0");
+        return `${thn}-${bln}-${hri}`;
+      }
+
+      const str = String(nilaiTanggal).trim();
+      if (!str) return "";
+
+      // String YYYY-MM-DD murni tanpa waktu
+      const matchMurniYMD = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (matchMurniYMD) {
+        return `${matchMurniYMD[1]}-${String(matchMurniYMD[2]).padStart(2, "0")}-${String(matchMurniYMD[3]).padStart(2, "0")}`;
+      }
+
+      // Format Indonesia DD/MM/YYYY atau DD-MM-YYYY
+      const cocokID = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (cocokID) {
+        return `${cocokID[3]}-${String(cocokID[2]).padStart(2, "0")}-${String(cocokID[1]).padStart(2, "0")}`;
+      }
+
+      // String ISO / Date string lainnya (konversi ke waktu lokal WIB)
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const thn = d.getFullYear();
+        const bln = String(d.getMonth() + 1).padStart(2, "0");
+        const hri = String(d.getDate()).padStart(2, "0");
+        return `${thn}-${bln}-${hri}`;
+      }
+
+      return "";
+    }
+
+    function getTanggalAcuanReservasi(r) {
+      return ekstrakTanggalYMD(
+        r.tanggal_bayar ||
+        r.tgl_bayar ||
+        r.tanggal_lunas ||
+        r.tanggal ||
+        r.check_in ||
+        r.check_out
+      );
+    }
+
+    function formatTanggalTampil(ymd) {
+      if (!ymd) return "-";
+      const bagian = ymd.split("-");
+      if (bagian.length !== 3) return ymd;
+      return `${bagian[2]}/${bagian[1]}/${bagian[0]}`;
+    }
+
+    function getNominalPemasukanLunas(r) {
+      const totalHarga = Number(r.total_harga || 0);
+      const dp = Number(r.dp || 0);
+      const nominalKolom = Number(r.nominal ?? r.jumlah_bayar ?? r.pemasukan ?? 0);
+      if (nominalKolom > 0) return nominalKolom;
+      if (totalHarga > 0) return totalHarga;
+      return dp;
+    }
+
+    async function muatLaporan() {
+      const tbodyIn = document.getElementById("tabelPemasukan");
+      const tbodyOut = document.getElementById("tabelPengeluaran");
+      tbodyIn.innerHTML = '<tr><td colspan="6">Memuat data pemasukan...</td></tr>';
+      tbodyOut.innerHTML = '<tr><td colspan="5">Memuat data pengeluaran...</td></tr>';
+
+      try {
+        const res = await fetch(SCRIPT_URL + "?action=all");
+        if (!res.ok) throw new Error("HTTP Status: " + res.status);
+
+        const data = await res.json();
+        dataReservasi = Array.isArray(data.reservasi) ? data.reservasi : [];
+        dataPengeluaran = Array.isArray(data.pengeluaran) ? data.pengeluaran : [];
+        hitungDanRender();
+      } catch (err) {
+        console.error(err);
+        tbodyIn.innerHTML = `<tr><td colspan="6" style="color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+        tbodyOut.innerHTML = `<tr><td colspan="5" style="color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+      }
+    }
+	
+	async function refreshDataLaporan() {
+		// 1. Kembalikan "Dari Tanggal" dan "Sampai Tanggal" ke tanggal hari ini
+		setDefaultTanggalHariIni();
+
+		// 2. Muat data terbaru lalu terapkan filter tanggal tersebut via hitungDanRender()
+		await muatLaporan();
+	}
+
+    function hitungDanRender() {
+		const tglMulai = document.getElementById("tgl_mulai").value;
+		const tglAkhir = document.getElementById("tgl_akhir").value;
+
+		const pemasukanLunas = dataReservasi.filter(r => {
+		const statusBayar = String(r.status_bayar || "").trim().toLowerCase();
+		if (statusBayar !== "lunas") return false;
+
+		const tglAcuan = getTanggalAcuanReservasi(r);
+		if (tglMulai && (!tglAcuan || tglAcuan < tglMulai)) return false;
+		if (tglAkhir && (!tglAcuan || tglAcuan > tglAkhir)) return false;
+		return true;
+		});
+
+		const pengeluaranTersaring = dataPengeluaran.filter(p => {
+		const tglExp = ekstrakTanggalYMD(p.tanggal);
+		if (tglMulai && (!tglExp || tglExp < tglMulai)) return false;
+		if (tglAkhir && (!tglExp || tglExp > tglAkhir)) return false;
+		return true;
+		});
+
+      let totalPemasukan = 0;
+      pemasukanLunas.forEach(r => {
+        totalPemasukan += getNominalPemasukanLunas(r);
+      });
+
+      let totalPengeluaran = 0;
+      pengeluaranTersaring.forEach(p => {
+        totalPengeluaran += Number(p.nominal || 0);
+      });
+
+      const keuntunganBersih = totalPemasukan - totalPengeluaran;
+
+      document.getElementById("total_pemasukan").textContent = formatRupiah(totalPemasukan);
+      document.getElementById("jumlah_lunas").textContent = `${pemasukanLunas.length} transaksi Lunas`;
+
+      document.getElementById("total_pengeluaran").textContent = formatRupiah(totalPengeluaran);
+      document.getElementById("jumlah_pengeluaran").textContent = `${pengeluaranTersaring.length} catatan pengeluaran`;
+
+      const keuntunganEl = document.getElementById("keuntungan_bersih");
+      const kartuKeuntunganEl = document.getElementById("kartu_keuntungan");
+      const ketKeuntunganEl = document.getElementById("ket_keuntungan");
+
+      keuntunganEl.textContent = formatRupiah(keuntunganBersih);
+      if (keuntunganBersih >= 0) {
+        keuntunganEl.className = "text-green";
+        kartuKeuntunganEl.classList.remove("border-red");
+        kartuKeuntunganEl.classList.add("border-green");
+        ketKeuntunganEl.textContent = "Keuntungan bersih positif";
+      } else {
+        keuntunganEl.className = "text-red";
+        kartuKeuntunganEl.classList.remove("border-green");
+        kartuKeuntunganEl.classList.add("border-red");
+        ketKeuntunganEl.textContent = "Pengeluaran melebihi pemasukan Lunas";
+      }
+
+      renderTabelPemasukan(pemasukanLunas);
+      renderTabelPengeluaran(pengeluaranTersaring);
+    }
+
+    function resetSemuaTanggal() {
+      document.getElementById("tgl_mulai").value = "";
+      document.getElementById("tgl_akhir").value = "";
+      hitungDanRender();
+    }
+
+    function renderTabelPemasukan(daftar) {
+      const tbody = document.getElementById("tabelPemasukan");
+      if (daftar.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Belum ada reservasi dengan status_bayar "Lunas" pada rentang tanggal ini.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = "";
+      daftar.forEach(r => {
+        const ymdAcuan = getTanggalAcuanReservasi(r);
+        const nominalMasuk = getNominalPemasukanLunas(r);
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${r.id_booking || "-"}</strong></td>
+            <td>${formatTanggalTampil(ymdAcuan)}</td>
+            <td>${r.nama_tamu || "-"}</td>
+            <td>${r.id_kamar || "-"}</td>
+            <td><span class="badge lunas-badge">${String(r.status_bayar || "Lunas").trim()}</span></td>
+            <td class="text-green"><strong>${formatRupiah(nominalMasuk)}</strong></td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderTabelPengeluaran(daftar) {
+      const tbody = document.getElementById("tabelPengeluaran");
+      if (daftar.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">Belum ada data pengeluaran pada rentang tanggal ini.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = "";
+      daftar.forEach(p => {
+        const ymdExp = ekstrakTanggalYMD(p.tanggal);
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${p.id_pengeluaran || "-"}</strong></td>
+            <td>${formatTanggalTampil(ymdExp)}</td>
+            <td><span class="badge kategori-badge">${p.kategori || "Operasional"}</span></td>
+            <td>${p.keterangan || "-"}</td>
+            <td class="text-red"><strong>${formatRupiah(p.nominal)}</strong></td>
+          </tr>
+        `;
+      });
+    }
+
+    setDefaultTanggalHariIni();
+    muatNamaReceptionist();
+    muatLaporan();
+  </script>
+</body>
+</html>

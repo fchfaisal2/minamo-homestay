@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meja Resepsionis - MINAMO HOMESTAY</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 25px auto; padding: 0 15px; color: #111827; }
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .top-nav-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-home {
+      display: inline-block;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-home:hover { background: #cbd5e1; }
+    .receptionist-badge {
+      font-size: 13px;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .receptionist-badge:hover {
+      background: #e2e8f0;
+    }
+    .receptionist-badge strong {
+      color: #0f172a;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; min-width: 720px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #f3f4f6; }
+    button { background: #16a34a; color: white; border: none; padding: 7px 11px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+    button:hover { background: #15803d; }
+    .btn-primary { background: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #4b5563; }
+    .btn-secondary:hover { background: #374151; }
+    .btn-kwitansi { background: #0284c7; }
+    .btn-kwitansi:hover { background: #0369a1; }
+    .btn-checkout { background: #d97706; }
+    .btn-checkout:hover { background: #b45309; }
+    .btn-tanggal { background: #7c3aed; }
+    .btn-tanggal:hover { background: #6d28d9; }
+	
+	.btn-batal { background: #dc2626; }
+	.btn-batal:hover { background: #b91c1c; }
+	.batal { background: #fecaca; color: #991b1b; }
+
+    .aksi-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+    /* Panel Akumulasi Periode & Filter Status */
+    .laporan-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+    .laporan-box h3 { margin: 0 0 12px; font-size: 16px; }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .filter-group input,
+    .filter-group select {
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .ringkasan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .kartu-stat {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    .kartu-stat small { color: #64748b; display: block; margin-bottom: 4px; }
+    .kartu-stat strong { font-size: 17px; }
+    .text-green { color: #16a34a; }
+    .text-amber { color: #d97706; }
+
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+    .booked { background: #fef08a; color: #854d0e; }
+    .checkin { background: #bbf7d0; color: #166534; }
+    .checkout { background: #e2e8f0; color: #334155; }
+
+    .footer-note {
+      width: 100%;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* Modal Kwitansi & Modal Ubah Tanggal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      z-index: 1000;
+    }
+    .modal-backdrop.aktif { display: flex; }
+
+    .modal-card {
+      background: #fff;
+      width: 100%;
+      max-width: 430px;
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border: 1px solid #cbd5e1;
+    }
+    .modal-card h3 { margin: 0 0 6px; font-size: 18px; }
+    .modal-sub { font-size: 13px; color: #475569; margin: 0 0 14px; }
+    .modal-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 13px; }
+    .modal-field label { font-weight: bold; color: #1e293b; }
+    .modal-field input { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+    .modal-ringkasan {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    .kwitansi-box {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border: 2px solid #111827;
+    }
+    .kwitansi-header {
+      text-align: center;
+      border-bottom: 2px dashed #9ca3af;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+    .kwitansi-header h2 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+    .kwitansi-alamat { margin: 5px 0 3px; font-size: 12px; color: #374151; line-height: 1.4; }
+    .kwitansi-header p.judul-kwitansi { margin: 4px 0 0; font-size: 13px; color: #4b5563; font-weight: bold; }
+    .kwitansi-row { display: flex; justify-content: space-between; margin: 7px 0; font-size: 14px; }
+    .kwitansi-total { border-top: 1px solid #d1d5db; margin-top: 12px; padding-top: 10px; font-weight: bold; font-size: 15px; }
+    .cap-status {
+      margin-top: 14px;
+      text-align: center;
+      border: 2px solid #16a34a;
+      color: #166534;
+      font-weight: bold;
+      padding: 6px;
+      border-radius: 4px;
+      letter-spacing: 2px;
+    }
+    .cap-status.belum-lunas {
+      border-color: #d97706;
+      color: #b45309;
+    }
+    .kwitansi-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+    /* Mode Cetak */
+    @media print {
+      body > *:not(#modalKwitansi) { display: none !important; }
+      .modal-backdrop { position: static; background: none; display: block !important; padding: 0; }
+      .kwitansi-box { box-shadow: none; max-width: 100%; border: 1px solid #000; }
+      .kwitansi-actions { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <div class="top-nav-left">
+      <a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
+      <button class="btn-primary" onclick="muatData()">Refresh Data</button>
+    </div>
+    <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
+      Receptionist: <strong id="nama_receptionist">Petugas</strong>
+    </div>
+  </div>
+
+  <h2>MINAMO HOMESTAY   Daftar Reservasi &amp; Keuangan</h2>
+
+  <!-- Panel Akumulasi Pembayaran & Pencarian Status Reservasi -->
+  <div class="laporan-box">
+    <h3>Filter Data &amp; Akumulasi Pembayaran Kamar</h3>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="filter_status">Status Reservasi</label>
+        <select id="filter_status" onchange="terapkanFilter()">
+          <option value="">Semua Status</option>
+          <option value="Booked">Booked</option>
+          <option value="Check-In">Check-In</option>
+          <option value="check-out">check-out</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="cari_status_teks">Cari Kata Status</label>
+        <input type="text" id="cari_status_teks" placeholder="Contoh: check-out..." oninput="terapkanFilter()" />
+      </div>
+      <div class="filter-group">
+        <label for="tgl_mulai">Dari Tanggal</label>
+        <input type="date" id="tgl_mulai" onchange="terapkanFilter()" />
+      </div>
+      <div class="filter-group">
+        <label for="tgl_akhir">Sampai Tanggal</label>
+        <input type="date" id="tgl_akhir" onchange="terapkanFilter()" />
+      </div>
+      <button class="btn-primary" onclick="terapkanFilter()">Terapkan</button>
+      <button class="btn-secondary" onclick="resetFilter()">Reset Filter</button>
+    </div>
+
+    <div class="ringkasan-grid">
+      <div class="kartu-stat">
+        <small>Jumlah Reservasi</small>
+        <strong id="stat_jumlah">0 Transaksi</strong>
+      </div>
+      <div class="kartu-stat">
+        <small>Total Nilai Booking</small>
+        <strong id="stat_total">Rp 0</strong>
+      </div>
+      <div class="kartu-stat">
+        <small>Uang Masuk (DP + Lunas)</small>
+        <strong id="stat_masuk" class="text-green">Rp 0</strong>
+      </div>
+      <div class="kartu-stat">
+        <small>Sisa Belum Dibayar</small>
+        <strong id="stat_sisa" class="text-amber">Rp 0</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Booking</th>
+          <th>Nama Tamu</th>
+          <th>Kamar</th>
+		  <th>Tipe Kamar</th>
+          <th>Check-In / Out</th>
+          <th>Total / Masuk</th>
+          <th>Sisa Tagihan</th>
+          <th>Status Reservasi</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tabelReservasi">
+        <tr><td colspan="8">Memuat data reservasi...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer-note">
+    MINAMO HOMESTAY   Terhubung ke Google Sheets<br />
+    Copyright @FCHFAISAL
+  </p>
+
+  <!-- Modal Ubah Tanggal Check-In & Check-Out -->
+  <div id="modalUbahTanggal" class="modal-backdrop">
+    <div class="modal-card">
+      <h3>Ubah Tanggal Reservasi</h3>
+      <p id="ut_info_tamu" class="modal-sub">-</p>
+
+      <div class="modal-field">
+        <label for="ut_check_in">Tanggal Check-In Baru</label>
+        <input type="date" id="ut_check_in" onchange="hitungUlangBiayaUbahTanggal()" />
+      </div>
+
+      <div class="modal-field">
+        <label for="ut_check_out">Tanggal Check-Out Baru</label>
+        <input type="date" id="ut_check_out" onchange="hitungUlangBiayaUbahTanggal()" />
+      </div>
+
+      <div class="modal-ringkasan" id="ut_ringkasan_biaya">
+        Durasi: 0 malam<br />
+        Estimasi Total Biaya: Rp 0<br />
+        DP Tercatat: Rp 0 | Sisa Tagihan: Rp 0
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="tutupModalUbahTanggal()">Batal</button>
+        <button id="btn_simpan_tanggal" class="btn-primary" onclick="simpanPerubahanTanggal()">Simpan Tanggal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Kwitansi -->
+  <div id="modalKwitansi" class="modal-backdrop">
+    <div class="kwitansi-box">
+      <div class="kwitansi-header">
+        <h2>MINAMO HOMESTAY</h2>
+        <div class="kwitansi-alamat">Jln. Sri Rezeki, Bulakan Balai Kandih Kota Payakumbuh</div>
+        <p class="judul-kwitansi">KWITANSI PEMBAYARAN RESERVASI</p>
+      </div>
+
+      <div class="kwitansi-row"><span>No. Booking:</span><strong id="k_id">-</strong></div>
+      <div class="kwitansi-row"><span>Tanggal Cetak:</span><span id="k_tgl_cetak">-</span></div>
+      <div class="kwitansi-row"><span>Receptionist:</span><strong id="k_receptionist">-</strong></div>
+      <div class="kwitansi-row"><span>Nama Tamu:</span><span id="k_nama">-</span></div>
+      <div class="kwitansi-row"><span>No. HP / WA:</span><span id="k_hp">-</span></div>
+      <div class="kwitansi-row"><span>Kode Kamar:</span><span id="k_kamar">-</span></div>
+      <div class="kwitansi-row"><span>Periode Menginap:</span><span id="k_periode">-</span></div>
+
+      <div class="kwitansi-row kwitansi-total"><span>Total Biaya:</span><span id="k_total">Rp 0</span></div>
+      <div class="kwitansi-row"><span>DP / Uang Masuk:</span><span id="k_dp">Rp 0</span></div>
+      <div class="kwitansi-row"><span>Pelunasan Saat Check-In:</span><span id="k_pelunasan">Rp 0</span></div>
+      <div class="kwitansi-row kwitansi-total"><span>Sisa Tagihan:</span><span id="k_sisa">Rp 0</span></div>
+
+      <div id="k_cap" class="cap-status">LUNAS</div>
+
+      <div class="kwitansi-actions">
+        <button class="btn-secondary" onclick="tutupKwitansi()">Tutup</button>
+        <button class="btn-primary" onclick="window.print()">Cetak Kwitansi</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
+                       
+	const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+    let dataReservasiTerakhir = [];
+    let dataKamarTerakhir = [];
+    let bookingSedangDiubah = null;
+
+	
+	function bukaMenuUtama() {
+	try {
+    const winMenu = window.open("menu.html", "minamo_menu");
+    if (winMenu) {
+      winMenu.focus();
+      return false;
+    }
+	} catch (err) {
+    console.warn("Gagal memfokuskan tab menu:", err);
+	}
+	return true;
+	}
+
+    function getTanggalHariIniYMD() {
+      const sekarang = new Date();
+      const tahun = sekarang.getFullYear();
+      const bulan = String(sekarang.getMonth() + 1).padStart(2, "0");
+      const hari = String(sekarang.getDate()).padStart(2, "0");
+      return `${tahun}-${bulan}-${hari}`;
+    }
+	
+	function aturTanggalFilterDefault() {
+		const hariIni = getTanggalHariIniYMD();
+		document.getElementById("tgl_mulai").value = hariIni;
+		document.getElementById("tgl_akhir").value = hariIni;
+	}
+
+    function ekstrakTanggalYMD(nilaiTanggal) {
+      if (!nilaiTanggal && nilaiTanggal !== 0) return "";
+
+      if (nilaiTanggal instanceof Date) {
+        if (isNaN(nilaiTanggal.getTime())) return "";
+        const tahun = nilaiTanggal.getFullYear();
+        const bulan = String(nilaiTanggal.getMonth() + 1).padStart(2, "0");
+        const hari = String(nilaiTanggal.getDate()).padStart(2, "0");
+        return `${tahun}-${bulan}-${hari}`;
+      }
+
+      const str = String(nilaiTanggal).trim();
+      if (!str) return "";
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        return str;
+      }
+
+      const cocokID = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (cocokID) {
+        const hari = String(cocokID[1]).padStart(2, "0");
+        const bulan = String(cocokID[2]).padStart(2, "0");
+        const tahun = cocokID[3];
+        return `${tahun}-${bulan}-${hari}`;
+      }
+
+      const cocokMidnightUTC = str.match(/^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.000)?Z$/i);
+      if (cocokMidnightUTC) {
+        return cocokMidnightUTC[1];
+      }
+
+      const d = new Date(str);
+      if (isNaN(d.getTime())) {
+        const cocokAwal = str.match(/^(\d{4}-\d{2}-\d{2})/);
+        return cocokAwal ? cocokAwal[1] : "";
+      }
+
+      const tahun = d.getFullYear();
+      const bulan = String(d.getMonth() + 1).padStart(2, "0");
+      const hari = String(d.getDate()).padStart(2, "0");
+      return `${tahun}-${bulan}-${hari}`;
+    }
+
+    function muatNamaReceptionist() {
+      const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
+      const nama = (tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas";
+      document.getElementById("nama_receptionist").textContent = nama;
+      return nama;
+    }
+
+    function gantiReceptionist() {
+      const namaSaatIni = muatNamaReceptionist();
+      const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
+      if (inputBaru === null) return;
+      const namaBersih = inputBaru.trim() || "Petugas";
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
+      document.getElementById("nama_receptionist").textContent = namaBersih;
+    }
+	
+	function formatRupiah(angka) {
+      return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+    }
+
+    function keFormatYMD(nilaiTanggal) {
+      return ekstrakTanggalYMD(nilaiTanggal);
+    }
+
+    function getKelasBadge(status) {
+      const s = String(status || "").trim().toLowerCase();
+      if (s === "check-in" || s === "checkin" || s === "check_in") return "checkin";
+      if (s === "check-out" || s === "checkout" || s === "check_out") return "checkout";
+	  if (s === "dibatalkan" || s === "batal" || s === "cancel" || s === "cancelled") return "batal";
+      return "booked";
+    }
+
+    async function muatData() {
+		const tbody = document.getElementById("tabelReservasi");
+		tbody.innerHTML = '<tr><td colspan="9">Memuat data...</td></tr>';
+		try {
+			const res = await fetch(SCRIPT_URL + "?action=all");
+			if (!res.ok) throw new Error("HTTP Status: " + res.status);
+			const data = await res.json();
+			dataReservasiTerakhir = data.reservasi || [];
+			dataKamarTerakhir = data.kamar || [];
+			terapkanFilter();
+		} catch (err) {
+			console.error(err);
+			tbody.innerHTML = `<tr><td colspan="9" style="color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+		}
+	}
+
+    function terapkanFilter() {
+      const statusDipilih = document.getElementById("filter_status").value.trim().toLowerCase();
+      const kataStatus = document.getElementById("cari_status_teks").value.trim().toLowerCase();
+      const tglMulai = document.getElementById("tgl_mulai").value;
+      const tglAkhir = document.getElementById("tgl_akhir").value;
+
+      const hasilFilter = dataReservasiTerakhir.filter(r => {
+        const statusAktual = String(r.status_reservasi || "Booked").trim().toLowerCase();
+
+        if (statusDipilih && statusAktual !== statusDipilih) {
+          return false;
+        }
+        if (kataStatus && !statusAktual.includes(kataStatus)) {
+          return false;
+        }
+
+        const tglCheckIn = keFormatYMD(r.check_in);
+        if (!tglCheckIn) return !tglMulai && !tglAkhir;
+        if (tglMulai && tglCheckIn < tglMulai) return false;
+        if (tglAkhir && tglCheckIn > tglAkhir) return false;
+
+        return true;
+      });
+
+      let totalNilai = 0;
+      let totalMasuk = 0;
+      let totalSisa = 0;
+
+      hasilFilter.forEach(r => {
+        totalNilai += Number(r.total_harga || 0);
+        totalMasuk += Number(r.dp || 0);
+        totalSisa += Number(r.sisa_bayar || 0);
+      });
+
+      document.getElementById("stat_jumlah").textContent = `${hasilFilter.length} Transaksi`;
+      document.getElementById("stat_total").textContent = formatRupiah(totalNilai);
+      document.getElementById("stat_masuk").textContent = formatRupiah(totalMasuk);
+      document.getElementById("stat_sisa").textContent = formatRupiah(totalSisa);
+
+      renderTabel(hasilFilter);
+    }
+
+    function resetFilterXXX() {
+      document.getElementById("filter_status").value = "";
+      document.getElementById("cari_status_teks").value = "";
+      document.getElementById("tgl_mulai").value = "";
+      document.getElementById("tgl_akhir").value = "";
+      terapkanFilter();
+    }
+	function resetFilter() {
+		document.getElementById("filter_status").value = "";
+		document.getElementById("cari_status_teks").value = "";
+		aturTanggalFilterDefault();
+		terapkanFilter();
+	}
+	
+	
+	function renderTabel(daftar) {
+		const tbody = document.getElementById("tabelReservasi");
+		if (daftar.length === 0) {
+			tbody.innerHTML = '<tr><td colspan="9">Tidak ada data reservasi yang sesuai dengan pencarian/filter.</td></tr>';
+			return;
+		}
+
+		tbody.innerHTML = "";
+		daftar.forEach(r => {
+		const status = r.status_reservasi || "Booked";
+		const statusNorm = String(status).trim().toLowerCase();
+		const isBooked = statusNorm === "booked";
+		const isCheckedIn = statusNorm === "check-in" || statusNorm === "checkin" || statusNorm === "check_in";
+		const ymdIn = ekstrakTanggalYMD(r.check_in);
+		const ymdOut = ekstrakTanggalYMD(r.check_out);
+		const tglIn = ymdIn ? new Date(ymdIn + "T00:00:00").toLocaleDateString("id-ID") : "-";
+		const tglOut = ymdOut ? new Date(ymdOut + "T00:00:00").toLocaleDateString("id-ID") : "-";
+		const namaAman = (r.nama_tamu || "").replace(/'/g, "\\'");
+		const tipeKamar = cariTipeKamar(r.id_kamar); // <--- AMBIL TIPE KAMAR
+
+		let tombolAksi = "";
+		if (isBooked) {
+			tombolAksi = `<button onclick="prosesCheckIn('${r.id_booking}', '${r.id_kamar}', ${Number(r.sisa_bayar || 0)})">Check-In &amp; Lunasi</button>`;
+		} else if (isCheckedIn) {
+			tombolAksi = `<button class="btn-checkout" onclick="prosesCheckOut('${r.id_booking}', '${r.id_kamar}', '${namaAman}')">Check-Out</button>`;
+		} else {
+			tombolAksi = `<small style="color:#64748b;">Selesai</small>`;
+		}
+
+		const tombolUbahTanggal = isBooked
+		? `<button class="btn-tanggal" onclick="bukaModalUbahTanggal('${r.id_booking}')">Ubah Tanggal</button>`
+		: "";
+
+		const tombolBatal = isBooked
+		? `<button class="btn-batal" onclick="prosesBatalReservasi('${r.id_booking}', '${r.id_kamar}', '${namaAman}')">Batal Reservasi</button>`
+		: "";
+
+		tbody.innerHTML += `
+		<tr>
+        <td><strong>${r.id_booking || "-"}</strong></td>
+        <td>${r.nama_tamu || "-"}<br><small>${r.no_hp || ""}</small></td>
+        <td>${r.id_kamar || "-"}</td>
+        <td>${tipeKamar}</td> <!-- SEL TIPE KAMAR -->
+        <td>${tglIn} - ${tglOut}</td>
+        <td>${formatRupiah(r.total_harga)}<br><small class="text-green">Masuk: ${formatRupiah(r.dp)}</small></td>
+        <td>${formatRupiah(r.sisa_bayar)}</td>
+        <td><span class="badge ${getKelasBadge(status)}">${status}</span></td>
+        <td>
+          <div class="aksi-group">
+            ${tombolAksi}
+            ${tombolUbahTanggal}
+            ${tombolBatal}
+            <button class="btn-kwitansi" onclick="lihatUlangKwitansi('${r.id_booking}')">Kwitansi</button>
+          </div>
+        </td>
+		</tr>
+    `;
+		});
+	}
+
+    function cariTipeKamar(idKamar) {
+		const kodeBersih = String(idKamar || "").trim();
+		const kamarCocok = dataKamarTerakhir.find(k => String(k.id_kamar || "").trim() === kodeBersih);
+		return kamarCocok ? (kamarCocok.tipe || "-") : "-";
+	}
+
+    function cariHargaKamar(idKamar) {
+      const kodeBersih = String(idKamar || "").trim();
+      const kamarCocok = dataKamarTerakhir.find(k => String(k.id_kamar || "").trim() === kodeBersih);
+      return kamarCocok ? Number(kamarCocok.harga_per_malam || 0) : 0;
+    }
+
+    function hitungUlangBiayaUbahTanggal() {
+      const ringkasanEl = document.getElementById("ut_ringkasan_biaya");
+      if (!bookingSedangDiubah) return;
+
+      const tglInStr = document.getElementById("ut_check_in").value;
+      const tglOutStr = document.getElementById("ut_check_out").value;
+      const dpSaatIni = Number(bookingSedangDiubah.dp || 0);
+      const hargaMalam = cariHargaKamar(bookingSedangDiubah.id_kamar);
+
+      if (!tglInStr || !tglOutStr) {
+        ringkasanEl.innerHTML = "Pilih tanggal check-in dan check-out terlebih dahulu.";
+        return null;
+      }
+
+      const dIn = new Date(tglInStr + "T00:00:00");
+      const dOut = new Date(tglOutStr + "T00:00:00");
+      const malam = Math.round((dOut - dIn) / (1000 * 60 * 60 * 24));
+
+      if (malam <= 0) {
+        ringkasanEl.innerHTML = `<span class="text-amber"><strong>Tanggal check-out harus lebih lambat dari check-in.</strong></span>`;
+        return null;
+      }
+
+      const totalBaru = hargaMalam > 0 ? malam * hargaMalam : Number(bookingSedangDiubah.total_harga || 0);
+      const sisaBaru = Math.max(totalBaru - dpSaatIni, 0);
+
+      ringkasanEl.innerHTML = `
+        Durasi: <strong>${malam} malam</strong>${hargaMalam > 0 ? ` (${formatRupiah(hargaMalam)}/malam)` : ""}<br />
+        Total Biaya: <strong>${formatRupiah(totalBaru)}</strong><br />
+        DP Tercatat: <strong>${formatRupiah(dpSaatIni)}</strong> | Sisa Tagihan: <strong class="text-amber">${formatRupiah(sisaBaru)}</strong>
+      `;
+
+      return { check_in: tglInStr, check_out: tglOutStr, total_harga: totalBaru, sisa_bayar: sisaBaru };
+    }
+
+    function bukaModalUbahTanggal(idBooking) {
+      const item = dataReservasiTerakhir.find(r => r.id_booking === idBooking);
+      if (!item) {
+        alert("Data reservasi tidak ditemukan.");
+        return;
+      }
+
+      bookingSedangDiubah = item;
+      document.getElementById("ut_info_tamu").textContent =
+        `Booking ${item.id_booking}   ${item.nama_tamu || "-"} (Kamar ${item.id_kamar || "-"})`;
+      document.getElementById("ut_check_in").value = ekstrakTanggalYMD(item.check_in);
+      document.getElementById("ut_check_out").value = ekstrakTanggalYMD(item.check_out);
+      hitungUlangBiayaUbahTanggal();
+      document.getElementById("modalUbahTanggal").classList.add("aktif");
+    }
+
+    function tutupModalUbahTanggal() {
+      bookingSedangDiubah = null;
+      document.getElementById("modalUbahTanggal").classList.remove("aktif");
+    }
+	
+	async function prosesBatalReservasi(idBooking, idKamar, namaTamu) {
+		const konfirmasi = confirm(
+		`Batalkan reservasi ${idBooking} atas nama ${namaTamu || "-"} (Kamar ${idKamar})?\nStatus reservasi akan menjadi Dibatalkan dan kamar ${idKamar} kembali Tersedia.`
+		);
+		if (!konfirmasi) return;
+
+			try {
+				const res = await fetch(SCRIPT_URL, {
+				method: "POST",
+				headers: { "Content-Type": "text/plain;charset=utf-8" },
+					body: JSON.stringify({
+					action: "batal_reservasi",
+					id_booking: idBooking,
+					id_kamar: idKamar,
+					receptionist: muatNamaReceptionist()
+					})
+				});
+
+				const hasil = await res.json();
+				if (hasil.status === "success") {
+					const target = dataReservasiTerakhir.find(r => r.id_booking === idBooking);
+				if (target) {
+				target.status_reservasi = "Dibatalkan";
+				}
+				terapkanFilter();
+				alert(`Reservasi ${idBooking} berhasil dibatalkan dan kamar ${idKamar} kembali Tersedia.`);
+				setTimeout(muatData, 1000);
+				} else {
+				alert("Gagal membatalkan reservasi: " + (hasil.message || "Terjadi kesalahan server"));
+				}
+			} catch (err) {
+				alert("Gagal membatalkan reservasi: " + err.message);
+			}
+	}
+
+    async function simpanPerubahanTanggal() {
+      if (!bookingSedangDiubah) return;
+      const hasilHitung = hitungUlangBiayaUbahTanggal();
+      if (!hasilHitung) {
+        alert("Pastikan tanggal check-out lebih lambat dari tanggal check-in.");
+        return;
+      }
+
+      const btnSimpan = document.getElementById("btn_simpan_tanggal");
+      btnSimpan.disabled = true;
+      btnSimpan.textContent = "Menyimpan...";
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "ubah_tanggal",
+            id_booking: bookingSedangDiubah.id_booking,
+            check_in: hasilHitung.check_in,
+            check_out: hasilHitung.check_out,
+            total_harga: hasilHitung.total_harga,
+            receptionist: muatNamaReceptionist()
+          })
+        });
+
+        bookingSedangDiubah.check_in = hasilHitung.check_in;
+        bookingSedangDiubah.check_out = hasilHitung.check_out;
+        bookingSedangDiubah.total_harga = hasilHitung.total_harga;
+        bookingSedangDiubah.sisa_bayar = hasilHitung.sisa_bayar;
+
+        terapkanFilter();
+        tutupModalUbahTanggal();
+        alert("Tanggal reservasi berhasil diperbarui.");
+        setTimeout(muatData, 1000);
+      } catch (err) {
+        alert("Gagal mengubah tanggal reservasi: " + err.message);
+      } finally {
+        btnSimpan.disabled = false;
+        btnSimpan.textContent = "Simpan Tanggal";
+      }
+    }
+
+    function tampilkanKwitansi(item, anggapLunasSaatIni = false) {
+      const total = Number(item.total_harga || 0);
+      const dpAwal = Number(item.dp || 0);
+      const sisaAktual = anggapLunasSaatIni ? 0 : Math.max(Number(item.sisa_bayar ?? (total - dpAwal)), 0);
+      const pelunasan = anggapLunasSaatIni
+        ? Math.max(total - dpAwal, 0)
+        : (sisaAktual === 0 ? Math.max(total - dpAwal, 0) : 0);
+      const ymdIn = ekstrakTanggalYMD(item.check_in);
+      const ymdOut = ekstrakTanggalYMD(item.check_out);
+      const tglIn = ymdIn ? new Date(ymdIn + "T00:00:00").toLocaleDateString("id-ID") : "-";
+      const tglOut = ymdOut ? new Date(ymdOut + "T00:00:00").toLocaleDateString("id-ID") : "-";
+      const petugasAktif = muatNamaReceptionist();
+      const namaReceptionistKwitansi = (item.receptionist && String(item.receptionist).trim())
+        ? String(item.receptionist).trim()
+        : petugasAktif;
+
+      document.getElementById("k_id").textContent = item.id_booking || "-";
+      document.getElementById("k_tgl_cetak").textContent = new Date().toLocaleString("id-ID");
+      document.getElementById("k_receptionist").textContent = namaReceptionistKwitansi;
+      document.getElementById("k_nama").textContent = item.nama_tamu || "-";
+      document.getElementById("k_hp").textContent = item.no_hp || "-";
+      document.getElementById("k_kamar").textContent = item.id_kamar || "-";
+      document.getElementById("k_periode").textContent = `${tglIn} s/d ${tglOut}`;
+      document.getElementById("k_total").textContent = formatRupiah(total);
+      document.getElementById("k_dp").textContent = formatRupiah(dpAwal);
+      document.getElementById("k_pelunasan").textContent = formatRupiah(pelunasan);
+      document.getElementById("k_sisa").textContent = formatRupiah(sisaAktual);
+
+      const capEl = document.getElementById("k_cap");
+      if (sisaAktual === 0 && total > 0) {
+        capEl.textContent = "LUNAS   MINAMO HOMESTAY";
+        capEl.classList.remove("belum-lunas");
+      } else {
+        capEl.textContent = `DP / SISA ${formatRupiah(sisaAktual)}`;
+        capEl.classList.add("belum-lunas");
+      }
+
+      document.getElementById("modalKwitansi").classList.add("aktif");
+    }
+
+    function lihatUlangKwitansi(idBooking) {
+      const item = dataReservasiTerakhir.find(r => r.id_booking === idBooking);
+      if (!item) {
+        alert("Data reservasi tidak ditemukan.");
+        return;
+      }
+      tampilkanKwitansi(item, false);
+    }
+
+    function tutupKwitansi() {
+      document.getElementById("modalKwitansi").classList.remove("aktif");
+      muatData();
+    }
+
+    async function prosesCheckIn(idBooking, idKamar, sisaBayar) {
+      const itemTerpilih = dataReservasiTerakhir.find(r => r.id_booking === idBooking) || {
+        id_booking: idBooking,
+        id_kamar: idKamar,
+        total_harga: sisaBayar,
+        dp: 0,
+        sisa_bayar: sisaBayar
+      };
+
+      const tglCheckInYMD = ekstrakTanggalYMD(itemTerpilih.check_in);
+      const tanggalHariIniYMD = getTanggalHariIniYMD();
+
+      if (!tglCheckInYMD || tglCheckInYMD !== tanggalHariIniYMD) {
+        alert("Tanggal Check-In tidak valid. Harap melakukan perubahan tanggal reservasi terlebih dahulu");
+        return;
+      }
+
+      const konfirmasi = confirm(
+        `Konfirmasi Check-In untuk ${idBooking}?\nPelunasan yang diterima: ${formatRupiah(sisaBayar)}.`
+      );
+      if (!konfirmasi) return;
+
+      const namaReceptionist = muatNamaReceptionist();
+      const totalBiaya = Number(itemTerpilih.total_harga ?? sisaBayar);
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "checkin",
+            id_booking: idBooking,
+            id_kamar: idKamar,
+            status_reservasi: "Check-In",
+            status_bayar: "Lunas",
+            sisa_bayar: 0,
+            total_harga: totalBiaya,
+            receptionist: namaReceptionist
+          })
+        });
+
+        itemTerpilih.status_reservasi = "Check-In";
+        itemTerpilih.status_bayar = "Lunas";
+        itemTerpilih.sisa_bayar = 0;
+        itemTerpilih.receptionist = namaReceptionist;
+
+        terapkanFilter();
+        tampilkanKwitansi(itemTerpilih, true);
+      } catch (err) {
+        alert("Gagal memproses check-in: " + err.message);
+      }
+    }
+
+    async function prosesCheckOut(idBooking, idKamar, namaTamu) {
+      const konfirmasi = confirm(
+        `Konfirmasi Check-Out untuk ${namaTamu || idBooking} (Kamar ${idKamar})?\nStatus reservasi akan menjadi check-out dan kamar ${idKamar} kembali Tersedia.`
+      );
+      if (!konfirmasi) return;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "checkout",
+            id_booking: idBooking,
+            id_kamar: idKamar,
+            receptionist: muatNamaReceptionist()
+          })
+        });
+
+        const target = dataReservasiTerakhir.find(r => r.id_booking === idBooking);
+        if (target) {
+          target.status_reservasi = "check-out";
+        }
+        terapkanFilter();
+
+        alert(`Check-Out berhasil! Status reservasi berubah menjadi check-out dan kamar ${idKamar} kembali Tersedia.`);
+        setTimeout(muatData, 1000);
+      } catch (err) {
+        alert("Gagal memproses check-out: " + err.message);
+      }
+    }
+
+    muatNamaReceptionist();
+	aturTanggalFilterDefault();
+    muatData();
+  </script>
+</body>
+</html>

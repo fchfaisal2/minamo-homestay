@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MINAMO HOMESTAY — Menu Utama</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 20px;
+      color: #0f172a;
+    }
+    .container {
+      width: 100%;
+      max-width: 560px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px 22px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      text-align: center;
+    }
+    .brand-tag {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      margin: 8px 0 24px;
+      color: #475569;
+      font-size: 14px;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 480px) {
+      .menu-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .menu-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-decoration: none;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 18px 16px;
+      color: #0f172a;
+      background: #f8fafc;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .menu-card:hover {
+      transform: translateY(-2px);
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+    .menu-card.resepsionis:hover {
+      border-color: #16a34a;
+      background: #f0fdf4;
+    }
+    .menu-card.pengeluaran:hover {
+      border-color: #dc2626;
+      background: #fef2f2;
+    }
+    .menu-card.laporan:hover {
+      border-color: #0f766e;
+      background: #f0fdfa;
+    }
+    .menu-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .menu-title {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .menu-desc {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    .menu-btn {
+      display: inline-block;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #ffffff;
+      background: #2563eb;
+    }
+    .menu-card.resepsionis .menu-btn {
+      background: #16a34a;
+    }
+    .menu-card.pengeluaran .menu-btn {
+      background: #dc2626;
+    }
+    .menu-card.laporan .menu-btn {
+      background: #0f766e;
+    }
+    .footer-note {
+      width: 100%;
+      margin-top: 22px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand-tag">SISTEM MANAJEMEN HOTEL TERPADU</div>
+    <h1>MINAMO HOMESTAY</h1>
+    <p class="subtitle">Silakan pilih menu akses sesuai kebutuhan Anda:</p>
+
+    <div class="menu-grid">
+      <!-- Menggunakan target="..." bawaan HTML agar manajemen tab otomatis & konsisten -->
+      <a href="index.html" target="minamo_reservasi" class="menu-card">
+        <div>
+          <div class="menu-icon">🛏️</div>
+          <div class="menu-title">Reservasi</div>
+          <div class="menu-desc">Form pemesanan kamar, hitung total malam &amp; DP tamu.</div>
+        </div>
+        <span class="menu-btn">Buka Reservasi ↗</span>
+      </a>
+
+      <a href="admin.html" target="minamo_resepsionis" class="menu-card resepsionis">
+        <div>
+          <div class="menu-icon">🛎️</div>
+          <div class="menu-title">Resepsionis</div>
+          <div class="menu-desc">Kelola tamu masuk, check-in, check-out, kwitansi &amp; rekap bayar.</div>
+        </div>
+        <span class="menu-btn">Buka Resepsionis ↗</span>
+      </a>
+
+      <a href="pengeluaran.html" target="minamo_pengeluaran" class="menu-card pengeluaran">
+        <div>
+          <div class="menu-icon">💸</div>
+          <div class="menu-title">Pengeluaran</div>
+          <div class="menu-desc">Catat &amp; rekap biaya operasional harian homestay.</div>
+        </div>
+        <span class="menu-btn">Buka Pengeluaran ↗</span>
+      </a>
+
+      <a href="laporan.html" target="minamo_laporan" class="menu-card laporan">
+        <div>
+          <div class="menu-icon">📊</div>
+          <div class="menu-title">Laporan Keuangan</div>
+          <div class="menu-desc">Rekap pemasukan Lunas, pengeluaran &amp; keuntungan bersih.</div>
+        </div>
+        <span class="menu-btn">Buka Laporan ↗</span>
+      </a>
+    </div>
+
+    <p class="footer-note">
+      MINAMO HOMESTAY • Terhubung ke Google Sheets<br />
+      Copyright @FCHFAISAL
+    </p>
+  </div>
+  
+  <script>
+  try {
+    window.name = "minamo_menu";
+  } catch (err) {
+    console.warn("Tidak dapat mengatur nama tab:", err);
+  }
+</script>
+
+</body>
+</html>

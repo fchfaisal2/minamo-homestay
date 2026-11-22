@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking - MINAMO HOMESTAY</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 25px auto; padding: 0 15px; color: #111827; }
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn-home {
+      display: inline-block;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-home:hover { background: #cbd5e1; }
+    .receptionist-badge {
+      font-size: 13px;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .receptionist-badge:hover { background: #e2e8f0; }
+    .receptionist-badge strong { color: #0f172a; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input, select, button { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    button { background: #2563eb; color: white; border: none; margin-top: 20px; cursor: pointer; font-size: 16px; border-radius: 4px; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .info-harga { margin-top: 15px; padding: 10px; background: #f3f4f6; font-weight: bold; border-radius: 4px; }
+    .footer-note {
+      width: 100%;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+    #status { margin-top: 15px; font-weight: bold; text-align: center; }
+    .text-sukses { color: #16a34a; }
+    .text-gagal { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+	<a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
+    <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
+      Receptionist: <strong id="nama_receptionist">Petugas</strong>
+    </div>
+  </div>
+
+  <h2>MINAMO HOMESTAY — Booking</h2>
+
+  <form id="formBooking">
+    <label>Nama Lengkap Tamu</label>
+    <input type="text" id="nama_tamu" required />
+
+    <label>Nomor WhatsApp / HP</label>
+    <input type="tel" id="no_hp" placeholder="0812..." required />    
+
+    <label>Tanggal Check-in</label>
+    <input type="date" id="check_in" required />
+
+    <label>Tanggal Check-out</label>
+    <input type="date" id="check_out" required />
+	
+	<label>Pilih Kamar</label>
+    <select id="id_kamar" required>
+      <option value="">Memuat daftar kamar...</option>
+    </select>
+
+    <label>Uang Muka / DP (Rp)</label>
+    <input type="number" id="dp" min="0" value="0" />
+
+    <div class="info-harga">
+      Total Biaya: Rp <span id="tampil_total">0</span><br />
+      Sisa Bayar: Rp <span id="tampil_sisa">0</span>
+    </div>
+
+    <button type="submit" id="btnSubmit">Pesan Sekarang</button>
+  </form>
+
+  <p id="status"></p>
+
+  <p class="footer-note">
+    MINAMO HOMESTAY • Terhubung ke Google Sheets<br />
+    Copyright @FCHFAISAL
+  </p>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
+	
+    const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+    let daftarKamar = [];
+
+    // Set tanggal minimal check-in ke hari ini
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("check_in").setAttribute("min", today);
+    document.getElementById("check_out").setAttribute("min", today);
+	
+	function bukaMenuUtama() {
+		try {
+			const winMenu = window.open("menu.html", "minamo_menu");
+			if (winMenu) {
+			winMenu.focus();
+			return false;
+			}
+		} catch (err) {
+			console.warn("Gagal memfokuskan tab menu:", err);
+		}
+		return true;
+	}
+	
+	function formatTanggalLokal(dateObj = new Date()) {
+		const tahun = dateObj.getFullYear();
+		const bulan = String(dateObj.getMonth() + 1).padStart(2, "0");
+		const hari = String(dateObj.getDate()).padStart(2, "0");
+		return `${tahun}-${bulan}-${hari}`;
+	}
+
+	function aturTanggalDefault() {
+		const inputIn = document.getElementById("check_in");
+		const inputOut = document.getElementById("check_out");
+		const hariIni = formatTanggalLokal(new Date());
+
+		inputIn.min = hariIni;
+		inputIn.value = hariIni;
+
+		inputOut.min = hariIni;
+		inputOut.value = hariIni;
+
+		hitungTotal();
+	}
+
+    function muatNamaReceptionist() {
+      const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
+      const nama = (tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas";
+      document.getElementById("nama_receptionist").textContent = nama;
+      return nama;
+    }
+
+    function gantiReceptionist() {
+      const namaSaatIni = muatNamaReceptionist();
+      const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
+      if (inputBaru === null) return;
+      const namaBersih = inputBaru.trim() || "Petugas";
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
+      document.getElementById("nama_receptionist").textContent = namaBersih;
+    }
+
+    
+	
+	//let daftarKamar = [];
+	let daftarReservasi = [];
+	
+	function normalisasiIdKamar(nilai) {
+      return String(nilai ?? "").trim().toLowerCase().replace(/\s+/g, "");
+    }
+
+	function ekstrakTanggalYMD(nilai) {
+		if (!nilai) return "";
+
+		if (nilai instanceof Date && !isNaN(nilai.getTime())) {
+			return formatTanggalLokal(nilai);
+		}
+
+		const str = String(nilai).trim();
+
+		// Jika format murni YYYY-MM-DD (tanpa jam / Z), ambil langsung
+		const matchMurniYMD = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+		if (matchMurniYMD) {
+			const thn = matchMurniYMD[1];
+			const bln = String(matchMurniYMD[2]).padStart(2, "0");
+			const hri = String(matchMurniYMD[3]).padStart(2, "0");
+			return `${thn}-${bln}-${hri}`;
+		}
+
+		// Jika string ISO berwaktu (seperti "2026-11-22T17:00:00.000Z"),
+		// konversi ke objek Date agar menyesuaikan zona waktu lokal perangkat (WIB)
+		const d = new Date(str);
+		if (!isNaN(d.getTime())) {
+			return formatTanggalLokal(d);
+		}
+
+		// Format DD/MM/YYYY atau DD-MM-YYYY
+		const matchId = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+		if (matchId) {
+			const hri = String(matchId[1]).padStart(2, "0");
+			const bln = String(matchId[2]).padStart(2, "0");
+			const thn = matchId[3];
+			return `${thn}-${bln}-${hri}`;
+		}
+
+		return "";
+	}
+	
+	function ymdKeTimestampLokal(ymd) {
+		const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+		if (!m) return NaN;
+			return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
+	}
+
+
+	function isStatusReservasiAktif(status) {
+		const s = String(status ?? "")
+		.trim()
+		.toLowerCase()
+		.replace(/[\s_-]+/g, "");
+		return s === "booked" || s === "checkin";
+	}
+
+	function isKamarTersediaPadaTanggal(idKamar, valIn, valOut) {
+  const targetId = String(idKamar ?? "").trim();
+  if (!targetId) return false;
+
+  const reqInStr = ekstrakTanggalYMD(valIn);
+  const reqOutStr = ekstrakTanggalYMD(valOut);
+  const reqInTs = ymdKeTimestampLokal(reqInStr);
+  const reqOutTs = ymdKeTimestampLokal(reqOutStr);
+
+  if (isNaN(reqInTs)) return true;
+
+  // Jika check-out belum dipilih atau belum lebih besar dari check-in,
+  // cek apakah reqIn berada dalam rentang menginap [resIn, resOut)
+  if (isNaN(reqOutTs) || reqOutTs <= reqInTs) {
+    const bentrokSaatCheckIn = daftarReservasi.some(r => {
+      if (String(r.id_kamar ?? "").trim() !== targetId) return false;
+      if (!isStatusReservasiAktif(r.status_reservasi)) return false;
+
+      const resInTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_in));
+      const resOutTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_out));
+      if (isNaN(resInTs) || isNaN(resOutTs)) return false;
+
+      return resInTs <= reqInTs && resOutTs > reqInTs;
+    });
+    return !bentrokSaatCheckIn;
+  }
+
+  // Cek irisan rentang tanggal menginap [reqInTs, reqOutTs) dengan [resInTs, resOutTs)
+  const adaBentrok = daftarReservasi.some(r => {
+    if (String(r.id_kamar ?? "").trim() !== targetId) return false;
+    if (!isStatusReservasiAktif(r.status_reservasi)) return false;
+
+    const resInTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_in));
+    const resOutTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_out));
+    if (isNaN(resInTs) || isNaN(resOutTs)) return false;
+
+    return resInTs < reqOutTs && resOutTs > reqInTs;
+  });
+
+  return !adaBentrok;
+}
+
+	function renderOpsiKamar() {
+      const select = document.getElementById("id_kamar");
+      const pilihanSebelumnya = select.value;
+      const valIn = document.getElementById("check_in").value;
+      const valOut = document.getElementById("check_out").value;
+
+      select.innerHTML = '<option value="">-- Pilih Kamar --</option>';
+
+      let kamarTersedia = 0;
+      daftarKamar.forEach(k => {
+        const statusKamar = String(k.status || "").trim().toLowerCase();
+        const diblokirManual =
+          statusKamar === "maintenance" ||
+          statusKamar === "rusak" ||
+          statusKamar === "nonaktif" ||
+          statusKamar === "tidak tersedia";
+
+        if (diblokirManual) return;
+
+        if (isKamarTersediaPadaTanggal(k.id_kamar, valIn, valOut)) {
+          kamarTersedia++;
+          select.innerHTML += `<option value="${k.id_kamar}" data-harga="${k.harga_per_malam}">
+            ${k.nama_kamar} (${k.tipe}) - Rp ${Number(k.harga_per_malam).toLocaleString('id-ID')}/malam
+          </option>`;
+        }
+      });
+
+      if (kamarTersedia === 0) {
+        select.innerHTML = '<option value="">Tidak ada kamar tersedia pada tanggal ini</option>';
+      } else if (pilihanSebelumnya) {
+        const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
+        if (masihAda) select.value = pilihanSebelumnya;
+      }
+
+      hitungTotal();
+    }
+
+	async function muatKamar() {
+      const select = document.getElementById("id_kamar");
+      try {
+        let res = await fetch(SCRIPT_URL + "?action=all");
+        let data = await res.json();
+
+        if (!Array.isArray(data) && !data.kamar) {
+          res = await fetch(SCRIPT_URL);
+          data = await res.json();
+        }
+
+        daftarKamar = Array.isArray(data) ? data : (data.kamar || []);
+        daftarReservasi = Array.isArray(data?.reservasi) ? data.reservasi : [];
+
+        renderOpsiKamar();
+      } catch (err) {
+        console.error("Gagal memuat kamar:", err);
+        select.innerHTML = '<option value="">Gagal memuat daftar kamar</option>';
+        hitungTotal();
+      }
+    }
+	
+	async function segarkanKamarSesuaiTanggal() {
+      const select = document.getElementById("id_kamar");
+      const pilihanSebelumnya = select.value;
+
+      select.disabled = true;
+      select.innerHTML = '<option value="">Memuat ulang ketersediaan kamar...</option>';
+
+      await muatKamar();
+
+      if (pilihanSebelumnya) {
+        const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
+        if (masihAda) select.value = pilihanSebelumnya;
+      }
+
+      select.disabled = false;
+      hitungTotal();
+    }
+	
+    function hitungTotal() {
+      const select = document.getElementById("id_kamar");
+      const harga = Number(select.options[select.selectedIndex]?.dataset.harga || 0);
+      const dp = Number(document.getElementById("dp").value || 0);
+      const valIn = document.getElementById("check_in").value;
+      const valOut = document.getElementById("check_out").value;
+
+      if (harga && valIn && valOut) {
+        const tglIn = new Date(valIn);
+        const tglOut = new Date(valOut);
+
+        if (tglOut > tglIn) {
+          const malam = Math.round((tglOut - tglIn) / (1000 * 60 * 60 * 24));
+          const total = malam * harga;
+          const sisa = Math.max(total - dp, 0);
+
+          document.getElementById("tampil_total").textContent = total.toLocaleString('id-ID');
+          document.getElementById("tampil_sisa").textContent = sisa.toLocaleString('id-ID');
+          return total;
+        }
+      }
+
+      document.getElementById("tampil_total").textContent = "0";
+      document.getElementById("tampil_sisa").textContent = "0";
+      return 0;
+    }
+
+    document.getElementById("dp").addEventListener("input", hitungTotal);
+    document.getElementById("id_kamar").addEventListener("change", hitungTotal);
+	
+    document.getElementById("check_in").addEventListener("change", async () => {
+      const valIn = document.getElementById("check_in").value;
+      const inputOut = document.getElementById("check_out");
+      if (valIn) {
+        inputOut.setAttribute("min", valIn);
+        if (inputOut.value && inputOut.value < valIn) {
+          inputOut.value = valIn;
+        }
+      }
+      await segarkanKamarSesuaiTanggal();
+    });
+	
+    //document.getElementById("check_out").addEventListener("change", hitungTotal);
+	document.getElementById("check_out").addEventListener("change", async () => {
+      await segarkanKamarSesuaiTanggal();
+    });
+	
+    document.getElementById("formBooking").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const totalHarga = hitungTotal();
+      if (totalHarga <= 0) {
+        alert("Pastikan tanggal check-out lebih lambat dari check-in dan kamar sudah dipilih.");
+        return;
+      }
+
+      const statusEl = document.getElementById("status");
+      const btnSubmit = document.getElementById("btnSubmit");
+
+      statusEl.className = "";
+      statusEl.textContent = "Memproses pesanan...";
+      btnSubmit.disabled = true;
+
+      const payload = {
+        action: "buat_reservasi",
+        nama_tamu: document.getElementById("nama_tamu").value.trim(),
+        no_hp: document.getElementById("no_hp").value.trim(),
+        id_kamar: document.getElementById("id_kamar").value,
+        check_in: document.getElementById("check_in").value,
+        check_out: document.getElementById("check_out").value,
+        total_harga: totalHarga,
+        dp: Number(document.getElementById("dp").value || 0),
+        receptionist: muatNamaReceptionist()
+      };
+
+      try {
+        // Kirim sebagai text/plain JSON tanpa mode no-cors agar Apps Script menerima JSON utuh & mengembalikan respon
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const hasil = await res.json();
+
+        if (hasil.status === "success") {
+          statusEl.className = "text-sukses";
+          statusEl.textContent = `Reservasi berhasil! No Booking: ${hasil.id_booking || ''}`;
+          e.target.reset();
+          document.getElementById("tampil_total").textContent = "0";
+          document.getElementById("tampil_sisa").textContent = "0";
+          muatNamaReceptionist();
+          await muatKamar();
+        } else {
+          statusEl.className = "text-gagal";
+          statusEl.textContent = "Gagal mencatat reservasi: " + (hasil.message || "Terjadi kesalahan server");
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.className = "text-gagal";
+        statusEl.textContent = "Terjadi kesalahan koneksi saat mengirim data.";
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    });
+
+    muatNamaReceptionist();
+	aturTanggalDefault();
+    muatKamar();
+  </script>
+</body>
+</html>

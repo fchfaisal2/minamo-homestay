@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Pengeluaran - MINAMO HOMESTAY</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 25px auto; padding: 0 15px; color: #111827; }
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .top-nav-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-home {
+      display: inline-block;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-home:hover { background: #cbd5e1; }
+    .receptionist-badge {
+      font-size: 13px;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .receptionist-badge:hover {
+      background: #e2e8f0;
+    }
+    .receptionist-badge strong {
+      color: #0f172a;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; min-width: 740px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #f3f4f6; }
+    button { background: #16a34a; color: white; border: none; padding: 7px 11px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+    button:hover { background: #15803d; }
+    .btn-primary { background: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #4b5563; }
+    .btn-secondary:hover { background: #374151; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    /* Panel Filter & Ringkasan */
+    .laporan-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+    .laporan-box h3 { margin: 0 0 12px; font-size: 16px; }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .filter-group input,
+    .filter-group select {
+      padding: 7px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .ringkasan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .kartu-stat {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    .kartu-stat small { color: #64748b; display: block; margin-bottom: 4px; }
+    .kartu-stat strong { font-size: 17px; }
+    .text-red { color: #dc2626; }
+    .text-blue { color: #1d4ed8; }
+
+    /* Form Input Pengeluaran */
+    .form-pengeluaran-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+    .form-pengeluaran-grid .span-2 {
+      grid-column: span 2;
+    }
+    @media (max-width: 600px) {
+      .form-pengeluaran-grid .span-2 {
+        grid-column: span 1;
+      }
+    }
+
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+    .kategori-badge { background: #e0f2fe; color: #0369a1; }
+
+    .footer-note {
+      width: 100%;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <div class="top-nav-left">
+      <a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
+      <a href="admin.html" class="btn-home">Meja Resepsionis</a>
+      <button class="btn-primary" onclick="muatPengeluaran()">Refresh Data</button>
+    </div>
+    <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
+      Receptionist: <strong id="nama_receptionist">Petugas</strong>
+    </div>
+  </div>
+
+  <h2>MINAMO HOMESTAY — Data Pengeluaran Operasional</h2>
+
+  <!-- Form Tambah Pengeluaran -->
+  <div class="laporan-box">
+    <h3>Input Pengeluaran Baru</h3>
+    <form id="formPengeluaran" class="form-pengeluaran-grid">
+      <div class="filter-group">
+        <label for="exp_tanggal">Tanggal</label>
+        <input type="date" id="exp_tanggal" required />
+      </div>
+      <div class="filter-group">
+        <label for="exp_kategori">Kategori</label>
+        <select id="exp_kategori" required>
+          <option value="">Memuat kategori...</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="exp_nominal">Nominal (Rp)</label>
+        <input type="number" id="exp_nominal" min="1" placeholder="Contoh: 50000" required />
+      </div>
+      <div class="filter-group span-2">
+        <label for="exp_keterangan">Keterangan Pengeluaran</label>
+        <input type="text" id="exp_keterangan" placeholder="Contoh: Beli sabun, tisu, atau isi token listrik..." required />
+      </div>
+      <div>
+        <button type="submit" class="btn-danger" style="width: 100%; padding: 8px 12px;">+ Simpan Pengeluaran</button>
+      </div>
+    </form>
+    <p id="status_pengeluaran" style="margin: 10px 0 0; font-size: 13px; color: #334155;"></p>
+  </div>
+
+  <!-- Filter & Rekap Pengeluaran -->
+  <div class="laporan-box">
+    <h3>Filter &amp; Rekapitulasi Pengeluaran</h3>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="filter_kategori">Kategori</label>
+        <select id="filter_kategori" onchange="terapkanFilter()">
+          <option value="">Semua Kategori</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="cari_keterangan">Cari Keterangan</label>
+        <input type="text" id="cari_keterangan" placeholder="Contoh: listrik, sabun..." oninput="terapkanFilter()" />
+      </div>
+      <div class="filter-group">
+        <label for="tgl_mulai">Dari Tanggal</label>
+        <input type="date" id="tgl_mulai" onchange="terapkanFilter()" />
+      </div>
+      <div class="filter-group">
+        <label for="tgl_akhir">Sampai Tanggal</label>
+        <input type="date" id="tgl_akhir" onchange="terapkanFilter()" />
+      </div>
+      <button class="btn-primary" onclick="terapkanFilter()">Terapkan</button>
+      <button class="btn-secondary" onclick="resetFilter()">Reset Filter</button>
+    </div>
+
+    <div class="ringkasan-grid">
+      <div class="kartu-stat">
+        <small>Jumlah Catatan</small>
+        <strong id="stat_jumlah_exp" class="text-blue">0 Item</strong>
+      </div>
+      <div class="kartu-stat">
+        <small>Total Pengeluaran</small>
+        <strong id="stat_total_exp" class="text-red">Rp 0</strong>
+      </div>
+      <div class="kartu-stat">
+        <small>Rata-Rata per Catatan</small>
+        <strong id="stat_rata_exp">Rp 0</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabel Data Pengeluaran -->
+  <h3>Daftar Pengeluaran</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pengeluaran</th>
+          <th>Tanggal</th>
+          <th>Kategori</th>
+          <th>Keterangan</th>
+          <th>Nominal</th>
+          <th>Receptionist</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tabelPengeluaran">
+        <tr><td colspan="7">Memuat data pengeluaran...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer-note">
+    MINAMO HOMESTAY • Terhubung ke Google Sheets<br />
+    Copyright @FCHFAISAL
+  </p>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
+    const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+    let dataPengeluaranTerakhir = [];
+    let daftarKategoriTerakhir = [];
+	
+	function bukaMenuUtama() {
+		try {
+			const winMenu = window.open("menu.html", "minamo_menu");
+			if (winMenu) {
+			winMenu.focus();
+			return false;
+			}
+		} catch (err) {
+			console.warn("Gagal memfokuskan tab menu:", err);
+		}
+		return true;
+	}
+
+    function setTanggalDefault() {
+      const inputTgl = document.getElementById("exp_tanggal");
+      if (inputTgl && !inputTgl.value) {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        inputTgl.value = `${y}-${m}-${d}`;
+      }
+    }
+
+    function muatNamaReceptionist() {
+      const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
+      const nama = (tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas";
+      document.getElementById("nama_receptionist").textContent = nama;
+      return nama;
+    }
+
+    function gantiReceptionist() {
+      const namaSaatIni = muatNamaReceptionist();
+      const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
+      if (inputBaru === null) return;
+      const namaBersih = inputBaru.trim() || "Petugas";
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
+      document.getElementById("nama_receptionist").textContent = namaBersih;
+    }
+
+    function formatRupiah(angka) {
+      return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+    }
+
+    function keFormatYMD(nilaiTanggal) {
+      if (!nilaiTanggal && nilaiTanggal !== 0) return "";
+      if (nilaiTanggal instanceof Date) {
+        if (isNaN(nilaiTanggal.getTime())) return "";
+        const tahun = nilaiTanggal.getFullYear();
+        const bulan = String(nilaiTanggal.getMonth() + 1).padStart(2, "0");
+        const hari = String(nilaiTanggal.getDate()).padStart(2, "0");
+        return `${tahun}-${bulan}-${hari}`;
+      }
+      const str = String(nilaiTanggal).trim();
+      if (!str) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      const cocokMidnightUTC = str.match(/^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.000)?Z$/i);
+      if (cocokMidnightUTC) return cocokMidnightUTC[1];
+      const d = new Date(str);
+      if (isNaN(d.getTime())) return "";
+      const tahun = d.getFullYear();
+      const bulan = String(d.getMonth() + 1).padStart(2, "0");
+      const hari = String(d.getDate()).padStart(2, "0");
+      return `${tahun}-${bulan}-${hari}`;
+    }
+
+    function renderDropdownKategori(daftarKat) {
+      const selectForm = document.getElementById("exp_kategori");
+      const selectFilter = document.getElementById("filter_kategori");
+      const nilaiFilterSebelumnya = selectFilter.value;
+
+      selectForm.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+      selectFilter.innerHTML = '<option value="">Semua Kategori</option>';
+
+      const bersih = (daftarKat || [])
+        .map(item => String(item || "").trim())
+        .filter(Boolean);
+
+      bersih.forEach(kat => {
+        const optForm = document.createElement("option");
+        optForm.value = kat;
+        optForm.textContent = kat;
+        selectForm.appendChild(optForm);
+
+        const optFilter = document.createElement("option");
+        optFilter.value = kat;
+        optFilter.textContent = kat;
+        selectFilter.appendChild(optFilter);
+      });
+
+      if (nilaiFilterSebelumnya && bersih.includes(nilaiFilterSebelumnya)) {
+        selectFilter.value = nilaiFilterSebelumnya;
+      }
+    }
+
+    async function muatPengeluaran() {
+      const tbody = document.getElementById("tabelPengeluaran");
+      tbody.innerHTML = '<tr><td colspan="7">Memuat data pengeluaran...</td></tr>';
+
+      try {
+        const res = await fetch(SCRIPT_URL + "?action=all");
+        if (!res.ok) throw new Error("HTTP Status: " + res.status);
+
+        const data = await res.json();
+        dataPengeluaranTerakhir = data.pengeluaran || [];
+
+        if (Array.isArray(data.kategori_pengeluaran)) {
+          daftarKategoriTerakhir = data.kategori_pengeluaran;
+        } else if (Array.isArray(data.Kategoripengeluaran)) {
+          daftarKategoriTerakhir = data.Kategoripengeluaran
+            .map(row => String(row.kategori || "").trim())
+            .filter(Boolean);
+        } else {
+          daftarKategoriTerakhir = [];
+        }
+
+        renderDropdownKategori(daftarKategoriTerakhir);
+        terapkanFilter();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="7" style="color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+      }
+    }
+
+    function terapkanFilter() {
+      const kategoriDipilih = document.getElementById("filter_kategori").value.trim().toLowerCase();
+      const kataCari = document.getElementById("cari_keterangan").value.trim().toLowerCase();
+      const tglMulai = document.getElementById("tgl_mulai").value;
+      const tglAkhir = document.getElementById("tgl_akhir").value;
+
+      const hasil = dataPengeluaranTerakhir.filter(p => {
+        const katAktual = String(p.kategori || "").trim().toLowerCase();
+        const ketAktual = String(p.keterangan || "").trim().toLowerCase();
+
+        if (kategoriDipilih && katAktual !== kategoriDipilih) return false;
+        if (kataCari && !ketAktual.includes(kataCari) && !katAktual.includes(kataCari)) return false;
+
+        const tglExp = keFormatYMD(p.tanggal);
+        if (!tglExp) return !tglMulai && !tglAkhir;
+        if (tglMulai && tglExp < tglMulai) return false;
+        if (tglAkhir && tglExp > tglAkhir) return false;
+
+        return true;
+      });
+
+      let totalKeluar = 0;
+      hasil.forEach(p => {
+        totalKeluar += Number(p.nominal || 0);
+      });
+
+      const rataRata = hasil.length > 0 ? Math.round(totalKeluar / hasil.length) : 0;
+
+      document.getElementById("stat_jumlah_exp").textContent = `${hasil.length} Item`;
+      document.getElementById("stat_total_exp").textContent = formatRupiah(totalKeluar);
+      document.getElementById("stat_rata_exp").textContent = formatRupiah(rataRata);
+
+      renderTabelPengeluaran(hasil);
+    }
+
+    function resetFilter() {
+      document.getElementById("filter_kategori").value = "";
+      document.getElementById("cari_keterangan").value = "";
+      document.getElementById("tgl_mulai").value = "";
+      document.getElementById("tgl_akhir").value = "";
+      terapkanFilter();
+    }
+
+    function renderTabelPengeluaran(daftar) {
+      const tbody = document.getElementById("tabelPengeluaran");
+      if (!daftar || daftar.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7">Tidak ada data pengeluaran yang sesuai dengan filter.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = "";
+      daftar.forEach(p => {
+        const idExp = String(p.id_pengeluaran || "").trim();
+        const ymdExp = keFormatYMD(p.tanggal);
+        const tglTampil = ymdExp ? new Date(ymdExp + "T00:00:00").toLocaleDateString("id-ID") : "-";
+        const ketAman = String(p.keterangan || "-").replace(/'/g, "\\'");
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${idExp || "-"}</strong></td>
+            <td>${tglTampil}</td>
+            <td><span class="badge kategori-badge">${p.kategori || "Operasional"}</span></td>
+            <td>${p.keterangan || "-"}</td>
+            <td class="text-red"><strong>${formatRupiah(p.nominal)}</strong></td>
+            <td>${p.receptionist || "-"}</td>
+            <td>
+              ${idExp
+                ? `<button class="btn-danger" onclick="hapusPengeluaran('${idExp}', '${ketAman}')">Hapus</button>`
+                : `<small style="color:#64748b;">-</small>`}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    async function hapusPengeluaran(idPengeluaran, keterangan) {
+      const bersihId = String(idPengeluaran || "").trim();
+      if (!bersihId) return;
+
+      const konfirmasi = confirm(
+        `Hapus data pengeluaran ${bersihId} (${keterangan})?\nData baris akan dihapus dari tab Pengeluaran di Google Sheets.`
+      );
+      if (!konfirmasi) return;
+
+      const statusEl = document.getElementById("status_pengeluaran");
+      statusEl.textContent = `Menghapus pengeluaran ${bersihId}...`;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "hapus_pengeluaran",
+            id_pengeluaran: bersihId,
+            receptionist: muatNamaReceptionist()
+          })
+        });
+
+        dataPengeluaranTerakhir = dataPengeluaranTerakhir.filter(
+          item => String(item.id_pengeluaran || "").trim() !== bersihId
+        );
+        terapkanFilter();
+        statusEl.textContent = `Pengeluaran ${bersihId} berhasil dihapus.`;
+        setTimeout(muatPengeluaran, 1000);
+      } catch (err) {
+        statusEl.textContent = "Gagal menghapus pengeluaran: " + err.message;
+        alert("Gagal menghapus pengeluaran: " + err.message);
+      }
+    }
+
+    document.getElementById("formPengeluaran").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById("status_pengeluaran");
+      const tanggal = document.getElementById("exp_tanggal").value;
+      const kategori = document.getElementById("exp_kategori").value.trim();
+      const nominal = Number(document.getElementById("exp_nominal").value || 0);
+      const keterangan = document.getElementById("exp_keterangan").value.trim();
+      const receptionist = muatNamaReceptionist();
+
+      if (!kategori || nominal <= 0 || !keterangan) {
+        alert("Pilih kategori serta lengkapi nominal dan keterangan pengeluaran.");
+        return;
+      }
+
+      statusEl.textContent = "Menyimpan data pengeluaran...";
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "tambah_pengeluaran",
+            tanggal,
+            kategori,
+            nominal,
+            keterangan,
+            receptionist
+          })
+        });
+
+        statusEl.textContent = "Pengeluaran berhasil dicatat ke tab Pengeluaran di Google Sheets.";
+        document.getElementById("exp_nominal").value = "";
+        document.getElementById("exp_keterangan").value = "";
+        setTimeout(muatPengeluaran, 800);
+      } catch (err) {
+        statusEl.textContent = "Gagal menyimpan pengeluaran: " + err.message;
+      }
+    });
+
+    setTanggalDefault();
+    muatNamaReceptionist();
+    muatPengeluaran();
+  </script>
+</body>
+</html>
