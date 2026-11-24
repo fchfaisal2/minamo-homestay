@@ -213,7 +213,7 @@
   <div class="top-nav">
     <div class="top-nav-left">
       <a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
-      <button class="btn-primary" onclick="muatData()">Refresh Data</button>
+      <button class="btn-primary" onclick="refreshTanggalHariIni()">Refresh Data</button>
     </div>
     <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
       Receptionist: <strong id="nama_receptionist">Petugas</strong>
@@ -241,11 +241,11 @@
       </div>
       <div class="filter-group">
         <label for="tgl_mulai">Dari Tanggal</label>
-        <input type="date" id="tgl_mulai" onchange="terapkanFilter()" />
+        <input type="date" id="tgl_mulai" onchange="saatDariTanggalBerubah()" oninput="saatDariTanggalBerubah()" />
       </div>
       <div class="filter-group">
         <label for="tgl_akhir">Sampai Tanggal</label>
-        <input type="date" id="tgl_akhir" onchange="terapkanFilter()" />
+        <input type="date" id="tgl_akhir" onchange="saatSampaiTanggalBerubah()" oninput="saatSampaiTanggalBerubah()" />
       </div>
       <button class="btn-primary" onclick="terapkanFilter()">Terapkan</button>
       <button class="btn-secondary" onclick="resetFilter()">Reset Filter</button>
@@ -383,6 +383,38 @@
 		const hariIni = getTanggalHariIniYMD();
 		document.getElementById("tgl_mulai").value = hariIni;
 		document.getElementById("tgl_akhir").value = hariIni;
+	}
+
+	function refreshTanggalHariIni() {
+		aturTanggalFilterDefault();
+	}
+
+	  function saatDariTanggalBerubah() {
+		const inputMulai = document.getElementById("tgl_mulai");
+		const inputAkhir = document.getElementById("tgl_akhir");
+
+		const valMulai = inputMulai.value;
+		const valAkhir = inputAkhir.value;
+
+		// 1. Jika Dari Tanggal lebih besar dari Sampai Tanggal,
+		//    maka nilai Sampai Tanggal sama dengan Dari Tanggal
+		if (valMulai && valAkhir && valMulai > valAkhir) {
+			inputAkhir.value = valMulai;
+		}
+	}
+
+	function saatSampaiTanggalBerubah() {
+		const inputMulai = document.getElementById("tgl_mulai");
+		const inputAkhir = document.getElementById("tgl_akhir");
+
+		const valMulai = inputMulai.value;
+		const valAkhir = inputAkhir.value;
+
+		// 2. Jika Sampai Tanggal lebih kecil dari Dari Tanggal,
+		//    maka nilai Dari Tanggal sama dengan Sampai Tanggal
+		if (valMulai && valAkhir && valAkhir < valMulai) {
+			inputMulai.value = valAkhir;
+		}
 	}
 
     function ekstrakTanggalYMD(nilaiTanggal) {
