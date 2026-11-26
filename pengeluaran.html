@@ -252,6 +252,48 @@
   		return false;
 	}
 
+	function getTanggalHariIniYMD() {
+		const sekarang = new Date();
+		const tahun = sekarang.getFullYear();
+		const bulan = String(sekarang.getMonth() + 1).padStart(2, "0");
+		const hari = String(sekarang.getDate()).padStart(2, "0");
+		return `${tahun}-${bulan}-${hari}`;
+	}
+	
+	function aturTanggalFilterDefault() {
+		const hariIni = getTanggalHariIniYMD();
+		document.getElementById("tgl_mulai").value = hariIni;
+		document.getElementById("tgl_akhir").value = hariIni;
+	}
+	
+	function refreshTanggalHariIni() {
+		aturTanggalFilterDefault();
+	}
+	
+	function saatDariTanggalBerubah() {
+      const inputMulai = document.getElementById("tgl_mulai");
+      const inputAkhir = document.getElementById("tgl_akhir");
+
+      const valMulai = inputMulai.value;
+      const valAkhir = inputAkhir.value;
+
+      if (valMulai && valAkhir && valMulai > valAkhir) {
+        inputAkhir.value = valMulai;
+      }
+    }
+
+    function saatSampaiTanggalBerubah() {
+      const inputMulai = document.getElementById("tgl_mulai");
+      const inputAkhir = document.getElementById("tgl_akhir");
+
+      const valMulai = inputMulai.value;
+      const valAkhir = inputAkhir.value;
+
+      if (valMulai && valAkhir && valAkhir < valMulai) {
+        inputMulai.value = valAkhir;
+      }
+    }  
+
     function setTanggalDefault() {
       const inputTgl = document.getElementById("exp_tanggal");
       if (inputTgl && !inputTgl.value) {
@@ -515,6 +557,7 @@
     });
 
     setTanggalDefault();
+	aturTanggalFilterDefault();  
     muatNamaReceptionist();
     muatPengeluaran();
   </script>
