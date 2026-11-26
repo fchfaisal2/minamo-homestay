@@ -127,6 +127,47 @@
       color: #64748b;
       line-height: 1.6;
     }
+    .session-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #334155;
+    }
+    .session-info {
+      text-align: left;
+      line-height: 1.4;
+    }
+    .session-info strong {
+      color: #0f172a;
+    }
+    .btn-logout {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #ffffff;
+      background: #dc2626;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .btn-logout:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+    .btn-logout:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
   </style>
 </head>
 <body>
@@ -174,6 +215,15 @@
       </a>
     </div>
 
+    <div id="sessionBar" class="session-bar" style="display: none;">
+      <div class="session-info">
+        Login sebagai: <strong id="label_user_aktif">-</strong>
+      </div>
+      <button type="button" id="btnLogout" class="btn-logout" onclick="logoutSistem()">
+        Keluar Sesi
+      </button>
+    </div>
+
     <p class="footer-note">
       MINAMO HOMESTAY • Terhubung ke Google Sheets<br />
       Copyright @FCHFAISAL
@@ -181,10 +231,84 @@
   </div>
   
   <script>
-    
-      function bukaHalaman(namaFile) {
-      window.location.href = namaFile;
+
+    const STORAGE_KEY_SESSION = "minamo_login_session";
+	const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+
+  function ambilSesiValid() {
+    try {
+      const mentah = sessionStorage.getItem(STORAGE_KEY_SESSION) || localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!mentah) return null;
+
+      const sesi = JSON.parse(mentah);
+      if (!sesi || sesi.loggedIn !== true || !String(sesi.user || "").trim()) {
+        return null;
       }
+      return {
+        loggedIn: true,
+        user: String(sesi.user).trim(),
+        loginAt: sesi.loginAt || ""
+      };
+    } catch (err) {
+      console.warn("Gagal memeriksa sesi login:", err);
+      return null;
+    }
+  }
+
+  function perbaruiTampilanLogout(sesi) {
+    const barEl = document.getElementById("sessionBar");
+    const labelUserEl = document.getElementById("label_user_aktif");
+    const btnLogoutEl = document.getElementById("btnLogout");
+
+    if (!barEl || !labelUserEl || !btnLogoutEl) return;
+
+    if (sesi && sesi.loggedIn) {
+      barEl.style.display = "flex";
+      labelUserEl.textContent = sesi.user;
+      btnLogoutEl.disabled = false;
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, sesi.user);
+    } else {
+      barEl.style.display = "none";
+      btnLogoutEl.disabled = true;
+    }
+  }
+
+  function cekSesiLoginAtauRedirect() {
+    const sesi = ambilSesiValid();
+    if (!sesi) {
+      window.location.href = "login.html";
+      return null;
+    }
+    perbaruiTampilanLogout(sesi);
+    return sesi;
+  }
+
+  function logoutSistem() {
+    const sesi = ambilSesiValid();
+    if (!sesi) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const konfirmasi = confirm(`Keluar dari akun "${sesi.user}"?`);
+    if (!konfirmasi) return;
+
+    const btnLogoutEl = document.getElementById("btnLogout");
+    if (btnLogoutEl) {
+      btnLogoutEl.disabled = true;
+      btnLogoutEl.textContent = "Keluar...";
+    }
+
+    sessionStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    window.location.href = "login.html";
+  }
+
+  const sesiAktif = cekSesiLoginAtauRedirect();
+    
+  function bukaHalaman(namaFile) {
+      window.location.href = namaFile;
+  }
     
 </script>
 
