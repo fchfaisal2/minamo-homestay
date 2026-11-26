@@ -214,6 +214,26 @@
     </table>
   </div>
 
+  <!-- Tabel Rincian Pemasukan DP Status Bayar Booked -->
+  <h3>Rincian Pemasukan DP (Tab Reservasi — status_bayar: Booked, dp &gt; 0)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Booking</th>
+          <th>Tanggal Acuan</th>
+          <th>Nama Tamu</th>
+          <th>Kamar</th>
+          <th>status_bayar</th>
+          <th>Jumlah DP</th>
+        </tr>
+      </thead>
+      <tbody id="tabelPemasukanDP">
+        <tr><td colspan="6">Memuat data DP...</td></tr>
+      </tbody>
+    </table>
+  </div>	
+
   <!-- Tabel Rincian Pengeluaran -->
   <h3>Rincian Pengeluaran (Tab Pengeluaran — kolom nominal)</h3>
   <div class="table-wrap">
@@ -405,25 +425,36 @@
 	}
 
     function hitungDanRender() {
-		const tglMulai = document.getElementById("tgl_mulai").value;
-		const tglAkhir = document.getElementById("tgl_akhir").value;
+      const tglMulai = document.getElementById("tgl_mulai").value;
+      const tglAkhir = document.getElementById("tgl_akhir").value;
 
-		const pemasukanLunas = dataReservasi.filter(r => {
-		const statusBayar = String(r.status_bayar || "").trim().toLowerCase();
-		if (statusBayar !== "lunas") return false;
+      const pemasukanLunas = dataReservasi.filter(r => {
+        const statusBayar = String(r.status_bayar || "").trim().toLowerCase();
+        if (statusBayar !== "lunas") return false;
 
-		const tglAcuan = getTanggalAcuanReservasi(r);
-		if (tglMulai && (!tglAcuan || tglAcuan < tglMulai)) return false;
-		if (tglAkhir && (!tglAcuan || tglAcuan > tglAkhir)) return false;
-		return true;
-		});
+        const tglAcuan = getTanggalAcuanReservasi(r);
+        if (tglMulai && (!tglAcuan || tglAcuan < tglMulai)) return false;
+        if (tglAkhir && (!tglAcuan || tglAcuan > tglAkhir)) return false;
+        return true;
+      });
 
-		const pengeluaranTersaring = dataPengeluaran.filter(p => {
-		const tglExp = ekstrakTanggalYMD(p.tanggal);
-		if (tglMulai && (!tglExp || tglExp < tglMulai)) return false;
-		if (tglAkhir && (!tglExp || tglExp > tglAkhir)) return false;
-		return true;
-		});
+      const pemasukanDP = dataReservasi.filter(r => {
+        const statusBayar = String(r.status_bayar || "").trim().toLowerCase();
+        const nominalDP = Number(r.dp || 0);
+        if (statusBayar !== "booked" || nominalDP <= 0) return false;
+
+        const tglAcuan = getTanggalAcuanReservasi(r);
+        if (tglMulai && (!tglAcuan || tglAcuan < tglMulai)) return false;
+        if (tglAkhir && (!tglAcuan || tglAcuan > tglAkhir)) return false;
+        return true;
+      });
+
+      const pengeluaranTersaring = dataPengeluaran.filter(p => {
+        const tglExp = ekstrakTanggalYMD(p.tanggal);
+        if (tglMulai && (!tglExp || tglExp < tglMulai)) return false;
+        if (tglAkhir && (!tglExp || tglExp > tglAkhir)) return false;
+        return true;
+      });
 
       let totalPemasukan = 0;
       pemasukanLunas.forEach(r => {
@@ -461,6 +492,9 @@
       }
 
       renderTabelPemasukan(pemasukanLunas);
+      if (typeof renderTabelPemasukanDP === "function") {
+        renderTabelPemasukanDP(pemasukanDP);
+      }
       renderTabelPengeluaran(pengeluaranTersaring);
     }
 
@@ -489,7 +523,34 @@
             <td>${r.nama_tamu || "-"}</td>
             <td>${r.id_kamar || "-"}</td>
             <td><span class="badge lunas-badge">${String(r.status_bayar || "Lunas").trim()}</span></td>
-            <td class="text-green"><strong>${formatRupiah(nominalMasuk)}</strong></td>
+            <td class="text-green" style="text-align: right;"><strong>${Number(nominalMasuk || 0).toLocaleString("id-ID")}</strong></td>
+          </tr>
+        `;
+      });
+    }
+
+	function renderTabelPemasukanDP(daftar) {
+      const tbody = document.getElementById("tabelPemasukanDP");
+      if (!tbody) return;
+
+      if (daftar.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Belum ada reservasi berstatus "Booked" dengan DP lebih dari 0 pada rentang tanggal ini.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = "";
+      daftar.forEach(r => {
+        const ymdAcuan = getTanggalAcuanReservasi(r);
+        const nominalDP = Number(r.dp || 0);
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${r.id_booking || "-"}</strong></td>
+            <td>${formatTanggalTampil(ymdAcuan)}</td>
+            <td>${r.nama_tamu || "-"}</td>
+            <td>${r.id_kamar || "-"}</td>
+            <td><span class="badge">${String(r.status_bayar || "Booked").trim()}</span></td>
+            <td class="text-green" style="text-align: right;"><strong>${Number(nominalDP || 0).toLocaleString("id-ID")}</strong></td>
           </tr>
         `;
       });
@@ -511,7 +572,7 @@
             <td>${formatTanggalTampil(ymdExp)}</td>
             <td><span class="badge kategori-badge">${p.kategori || "Operasional"}</span></td>
             <td>${p.keterangan || "-"}</td>
-            <td class="text-red"><strong>${formatRupiah(p.nominal)}</strong></td>
+            <td class="text-red" style="text-align: right;"><strong>${Number(p.nominal || 0).toLocaleString("id-ID")}</strong></td>
           </tr>
         `;
       });
