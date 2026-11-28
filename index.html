@@ -161,24 +161,19 @@
   </p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
-	const STORAGE_KEY_SESSION = "minamo_login_session";
-  	const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";  
-	
-    const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
-    let daftarKamar = [];
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
+  const STORAGE_KEY_SESSION = "minamo_login_session";
+  const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
 
-    // Set tanggal minimal check-in ke hari ini
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById("check_in").setAttribute("min", today);
-    document.getElementById("check_out").setAttribute("min", today);
-	
-	function bukaMenuUtama() {
-  		window.location.href = "menu.html";
-  		return false;
-	}
+  let daftarKamar = [];
+  let daftarReservasi = [];
 
-	function ambilSesiValid() {
+  function bukaMenuUtama() {
+    window.location.href = "menu.html";
+    return false;
+  }
+
+  function ambilSesiValid() {
     try {
       const mentah = sessionStorage.getItem(STORAGE_KEY_SESSION) || localStorage.getItem(STORAGE_KEY_SESSION);
       if (!mentah) return null;
@@ -249,120 +244,127 @@
     localStorage.removeItem(STORAGE_KEY_SESSION);
     window.location.href = "login.html";
   }
-	
-	function formatTanggalLokal(dateObj = new Date()) {
-		const tahun = dateObj.getFullYear();
-		const bulan = String(dateObj.getMonth() + 1).padStart(2, "0");
-		const hari = String(dateObj.getDate()).padStart(2, "0");
-		return `${tahun}-${bulan}-${hari}`;
-	}
 
-	function aturTanggalDefault() {
-		const inputIn = document.getElementById("check_in");
-		const inputOut = document.getElementById("check_out");
-		const hariIni = formatTanggalLokal(new Date());
+  function formatTanggalLokal(dateObj = new Date()) {
+    const tahun = dateObj.getFullYear();
+    const bulan = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const hari = String(dateObj.getDate()).padStart(2, "0");
+    return `${tahun}-${bulan}-${hari}`;
+  }
 
-		inputIn.min = hariIni;
-		inputIn.value = hariIni;
+  function aturTanggalDefault() {
+    const inputIn = document.getElementById("check_in");
+    const inputOut = document.getElementById("check_out");
+    const hariIni = formatTanggalLokal(new Date());
 
-		inputOut.min = hariIni;
-		inputOut.value = hariIni;
-
-		hitungTotal();
-	}
-
-    function muatNamaReceptionist() {
-      const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
-      const nama = (tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas";
-      document.getElementById("nama_receptionist").textContent = nama;
-      return nama;
+    if (inputIn) {
+      inputIn.min = hariIni;
+      inputIn.value = hariIni;
     }
 
-    function gantiReceptionist() {
-      const namaSaatIni = muatNamaReceptionist();
-      const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
-      if (inputBaru === null) return;
-      const namaBersih = inputBaru.trim() || "Petugas";
-      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
-      document.getElementById("nama_receptionist").textContent = namaBersih;
+    if (inputOut) {
+      inputOut.min = hariIni;
+      inputOut.value = hariIni;
     }
 
-    
-	
-	//let daftarKamar = [];
-	let daftarReservasi = [];
-	
-	function normalisasiIdKamar(nilai) {
-      return String(nilai ?? "").trim().toLowerCase().replace(/\s+/g, "");
+    hitungTotal();
+  }
+
+  function muatNamaReceptionist() {
+    const sesi = ambilSesiValid();
+    const tersimpan = localStorage.getItem(STORAGE_KEY_RECEPTIONIST);
+    const nama = (sesi && sesi.user)
+      ? sesi.user
+      : ((tersimpan && tersimpan.trim()) ? tersimpan.trim() : "Petugas");
+
+    const badgeEl = document.getElementById("nama_receptionist");
+    if (badgeEl) badgeEl.textContent = nama;
+    return nama;
+  }
+
+  function gantiReceptionist() {
+    const namaSaatIni = muatNamaReceptionist();
+    const inputBaru = prompt("Masukkan nama receptionist yang bertugas:", namaSaatIni);
+    if (inputBaru === null) return;
+    const namaBersih = inputBaru.trim() || "Petugas";
+    localStorage.setItem(STORAGE_KEY_RECEPTIONIST, namaBersih);
+    const badgeEl = document.getElementById("nama_receptionist");
+    if (badgeEl) badgeEl.textContent = namaBersih;
+  }
+
+  function ekstrakTanggalYMD(nilai) {
+    if (!nilai) return "";
+
+    if (nilai instanceof Date && !isNaN(nilai.getTime())) {
+      return formatTanggalLokal(nilai);
     }
 
-	function ekstrakTanggalYMD(nilai) {
-		if (!nilai) return "";
+    const str = String(nilai).trim();
 
-		if (nilai instanceof Date && !isNaN(nilai.getTime())) {
-			return formatTanggalLokal(nilai);
-		}
+    const matchMurniYMD = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (matchMurniYMD) {
+      const thn = matchMurniYMD[1];
+      const bln = String(matchMurniYMD[2]).padStart(2, "0");
+      const hri = String(matchMurniYMD[3]).padStart(2, "0");
+      return `${thn}-${bln}-${hri}`;
+    }
 
-		const str = String(nilai).trim();
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return formatTanggalLokal(d);
+    }
 
-		// Jika format murni YYYY-MM-DD (tanpa jam / Z), ambil langsung
-		const matchMurniYMD = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-		if (matchMurniYMD) {
-			const thn = matchMurniYMD[1];
-			const bln = String(matchMurniYMD[2]).padStart(2, "0");
-			const hri = String(matchMurniYMD[3]).padStart(2, "0");
-			return `${thn}-${bln}-${hri}`;
-		}
+    const matchId = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (matchId) {
+      const hri = String(matchId[1]).padStart(2, "0");
+      const bln = String(matchId[2]).padStart(2, "0");
+      const thn = matchId[3];
+      return `${thn}-${bln}-${hri}`;
+    }
 
-		// Jika string ISO berwaktu (seperti "2026-11-22T17:00:00.000Z"),
-		// konversi ke objek Date agar menyesuaikan zona waktu lokal perangkat (WIB)
-		const d = new Date(str);
-		if (!isNaN(d.getTime())) {
-			return formatTanggalLokal(d);
-		}
+    return "";
+  }
 
-		// Format DD/MM/YYYY atau DD-MM-YYYY
-		const matchId = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-		if (matchId) {
-			const hri = String(matchId[1]).padStart(2, "0");
-			const bln = String(matchId[2]).padStart(2, "0");
-			const thn = matchId[3];
-			return `${thn}-${bln}-${hri}`;
-		}
+  function ymdKeTimestampLokal(ymd) {
+    const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return NaN;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
+  }
 
-		return "";
-	}
-	
-	function ymdKeTimestampLokal(ymd) {
-		const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-		if (!m) return NaN;
-			return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
-	}
+  function isStatusReservasiAktif(status) {
+    const s = String(status ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, "");
+    return s === "booked" || s === "checkin";
+  }
 
+  function isKamarTersediaPadaTanggal(idKamar, valIn, valOut) {
+    const targetId = String(idKamar ?? "").trim();
+    if (!targetId) return false;
 
-	function isStatusReservasiAktif(status) {
-		const s = String(status ?? "")
-		.trim()
-		.toLowerCase()
-		.replace(/[\s_-]+/g, "");
-		return s === "booked" || s === "checkin";
-	}
+    const reqInStr = ekstrakTanggalYMD(valIn);
+    const reqOutStr = ekstrakTanggalYMD(valOut);
+    const reqInTs = ymdKeTimestampLokal(reqInStr);
+    const reqOutTs = ymdKeTimestampLokal(reqOutStr);
 
-	function isKamarTersediaPadaTanggal(idKamar, valIn, valOut) {
-  const targetId = String(idKamar ?? "").trim();
-  if (!targetId) return false;
+    if (isNaN(reqInTs)) return true;
 
-  const reqInStr = ekstrakTanggalYMD(valIn);
-  const reqOutStr = ekstrakTanggalYMD(valOut);
-  const reqInTs = ymdKeTimestampLokal(reqInStr);
-  const reqOutTs = ymdKeTimestampLokal(reqOutStr);
+    if (isNaN(reqOutTs) || reqOutTs <= reqInTs) {
+      const bentrokSaatCheckIn = daftarReservasi.some(r => {
+        if (String(r.id_kamar ?? "").trim() !== targetId) return false;
+        if (!isStatusReservasiAktif(r.status_reservasi)) return false;
 
-  if (isNaN(reqInTs)) return true;
+        const resInTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_in));
+        const resOutTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_out));
+        if (isNaN(resInTs) || isNaN(resOutTs)) return false;
 
-  // Jika check-out belum dipilih atau belum lebih besar dari check-in,
-  // cek apakah reqIn berada dalam rentang menginap [resIn, resOut)
-  if (isNaN(reqOutTs) || reqOutTs <= reqInTs) {
-    const bentrokSaatCheckIn = daftarReservasi.some(r => {
+        return resInTs <= reqInTs && resOutTs > reqInTs;
+      });
+      return !bentrokSaatCheckIn;
+    }
+
+    const adaBentrok = daftarReservasi.some(r => {
       if (String(r.id_kamar ?? "").trim() !== targetId) return false;
       if (!isStatusReservasiAktif(r.status_reservasi)) return false;
 
@@ -370,217 +372,208 @@
       const resOutTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_out));
       if (isNaN(resInTs) || isNaN(resOutTs)) return false;
 
-      return resInTs <= reqInTs && resOutTs > reqInTs;
+      return resInTs < reqOutTs && resOutTs > reqInTs;
     });
-    return !bentrokSaatCheckIn;
+
+    return !adaBentrok;
   }
 
-  // Cek irisan rentang tanggal menginap [reqInTs, reqOutTs) dengan [resInTs, resOutTs)
-  const adaBentrok = daftarReservasi.some(r => {
-    if (String(r.id_kamar ?? "").trim() !== targetId) return false;
-    if (!isStatusReservasiAktif(r.status_reservasi)) return false;
+  function renderOpsiKamar() {
+    const select = document.getElementById("id_kamar");
+    const pilihanSebelumnya = select.value;
+    const valIn = document.getElementById("check_in").value;
+    const valOut = document.getElementById("check_out").value;
 
-    const resInTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_in));
-    const resOutTs = ymdKeTimestampLokal(ekstrakTanggalYMD(r.check_out));
-    if (isNaN(resInTs) || isNaN(resOutTs)) return false;
+    select.innerHTML = '<option value="">-- Pilih Kamar --</option>';
 
-    return resInTs < reqOutTs && resOutTs > reqInTs;
+    let kamarTersedia = 0;
+    daftarKamar.forEach(k => {
+      const statusKamar = String(k.status || "").trim().toLowerCase();
+      const diblokirManual =
+        statusKamar === "maintenance" ||
+        statusKamar === "rusak" ||
+        statusKamar === "nonaktif" ||
+        statusKamar === "tidak tersedia";
+
+      if (diblokirManual) return;
+
+      if (isKamarTersediaPadaTanggal(k.id_kamar, valIn, valOut)) {
+        kamarTersedia++;
+        select.innerHTML += `<option value="${k.id_kamar}" data-harga="${k.harga_per_malam}">
+          ${k.nama_kamar} (${k.tipe}) - Rp ${Number(k.harga_per_malam).toLocaleString('id-ID')}/malam
+        </option>`;
+      }
+    });
+
+    if (kamarTersedia === 0) {
+      select.innerHTML = '<option value="">Tidak ada kamar tersedia pada tanggal ini</option>';
+    } else if (pilihanSebelumnya) {
+      const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
+      if (masihAda) select.value = pilihanSebelumnya;
+    }
+
+    hitungTotal();
+  }
+
+  async function muatKamar() {
+    const select = document.getElementById("id_kamar");
+    try {
+      let res = await fetch(SCRIPT_URL + "?action=all");
+      let data = await res.json();
+
+      if (!Array.isArray(data) && !data.kamar) {
+        res = await fetch(SCRIPT_URL);
+        data = await res.json();
+      }
+
+      daftarKamar = Array.isArray(data) ? data : (data.kamar || []);
+      daftarReservasi = Array.isArray(data?.reservasi) ? data.reservasi : [];
+
+      renderOpsiKamar();
+    } catch (err) {
+      console.error("Gagal memuat kamar:", err);
+      select.innerHTML = '<option value="">Gagal memuat daftar kamar</option>';
+      hitungTotal();
+    }
+  }
+
+  async function segarkanKamarSesuaiTanggal() {
+    const select = document.getElementById("id_kamar");
+    const pilihanSebelumnya = select.value;
+
+    select.disabled = true;
+    select.innerHTML = '<option value="">Memuat ulang ketersediaan kamar...</option>';
+
+    await muatKamar();
+
+    if (pilihanSebelumnya) {
+      const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
+      if (masihAda) select.value = pilihanSebelumnya;
+    }
+
+    select.disabled = false;
+    hitungTotal();
+  }
+
+  function hitungTotal() {
+    const select = document.getElementById("id_kamar");
+    const harga = Number(select.options[select.selectedIndex]?.dataset.harga || 0);
+    const dp = Number(document.getElementById("dp").value || 0);
+    const valIn = document.getElementById("check_in").value;
+    const valOut = document.getElementById("check_out").value;
+
+    if (harga && valIn && valOut) {
+      const tglIn = new Date(valIn);
+      const tglOut = new Date(valOut);
+
+      if (tglOut > tglIn) {
+        const malam = Math.round((tglOut - tglIn) / (1000 * 60 * 60 * 24));
+        const total = malam * harga;
+        const sisa = Math.max(total - dp, 0);
+
+        document.getElementById("tampil_total").textContent = total.toLocaleString('id-ID');
+        document.getElementById("tampil_sisa").textContent = sisa.toLocaleString('id-ID');
+        return total;
+      }
+    }
+
+    document.getElementById("tampil_total").textContent = "0";
+    document.getElementById("tampil_sisa").textContent = "0";
+    return 0;
+  }
+
+  document.getElementById("dp").addEventListener("input", hitungTotal);
+  document.getElementById("id_kamar").addEventListener("change", hitungTotal);
+
+  document.getElementById("check_in").addEventListener("change", async () => {
+    const valIn = document.getElementById("check_in").value;
+    const inputOut = document.getElementById("check_out");
+    if (valIn) {
+      inputOut.setAttribute("min", valIn);
+      if (inputOut.value && inputOut.value < valIn) {
+        inputOut.value = valIn;
+      }
+    }
+    await segarkanKamarSesuaiTanggal();
   });
 
-  return !adaBentrok;
-}
+  document.getElementById("check_out").addEventListener("change", async () => {
+    await segarkanKamarSesuaiTanggal();
+  });
 
-	function renderOpsiKamar() {
-      const select = document.getElementById("id_kamar");
-      const pilihanSebelumnya = select.value;
-      const valIn = document.getElementById("check_in").value;
-      const valOut = document.getElementById("check_out").value;
+  document.getElementById("formBooking").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      select.innerHTML = '<option value="">-- Pilih Kamar --</option>';
-
-      let kamarTersedia = 0;
-      daftarKamar.forEach(k => {
-        const statusKamar = String(k.status || "").trim().toLowerCase();
-        const diblokirManual =
-          statusKamar === "maintenance" ||
-          statusKamar === "rusak" ||
-          statusKamar === "nonaktif" ||
-          statusKamar === "tidak tersedia";
-
-        if (diblokirManual) return;
-
-        if (isKamarTersediaPadaTanggal(k.id_kamar, valIn, valOut)) {
-          kamarTersedia++;
-          select.innerHTML += `<option value="${k.id_kamar}" data-harga="${k.harga_per_malam}">
-            ${k.nama_kamar} (${k.tipe}) - Rp ${Number(k.harga_per_malam).toLocaleString('id-ID')}/malam
-          </option>`;
-        }
-      });
-
-      if (kamarTersedia === 0) {
-        select.innerHTML = '<option value="">Tidak ada kamar tersedia pada tanggal ini</option>';
-      } else if (pilihanSebelumnya) {
-        const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
-        if (masihAda) select.value = pilihanSebelumnya;
-      }
-
-      hitungTotal();
+    const totalHarga = hitungTotal();
+    if (totalHarga <= 0) {
+      alert("Pastikan tanggal check-out lebih lambat dari check-in dan kamar sudah dipilih.");
+      return;
     }
 
-	async function muatKamar() {
-      const select = document.getElementById("id_kamar");
-      try {
-        let res = await fetch(SCRIPT_URL + "?action=all");
-        let data = await res.json();
+    const statusEl = document.getElementById("status");
+    const btnSubmit = document.getElementById("btnSubmit");
 
-        if (!Array.isArray(data) && !data.kamar) {
-          res = await fetch(SCRIPT_URL);
-          data = await res.json();
-        }
-
-        daftarKamar = Array.isArray(data) ? data : (data.kamar || []);
-        daftarReservasi = Array.isArray(data?.reservasi) ? data.reservasi : [];
-
-        renderOpsiKamar();
-      } catch (err) {
-        console.error("Gagal memuat kamar:", err);
-        select.innerHTML = '<option value="">Gagal memuat daftar kamar</option>';
-        hitungTotal();
-      }
-    }
-	
-	async function segarkanKamarSesuaiTanggal() {
-      const select = document.getElementById("id_kamar");
-      const pilihanSebelumnya = select.value;
-
-      select.disabled = true;
-      select.innerHTML = '<option value="">Memuat ulang ketersediaan kamar...</option>';
-
-      await muatKamar();
-
-      if (pilihanSebelumnya) {
-        const masihAda = Array.from(select.options).some(opt => opt.value === pilihanSebelumnya);
-        if (masihAda) select.value = pilihanSebelumnya;
-      }
-
-      select.disabled = false;
-      hitungTotal();
-    }
-	
-    function hitungTotal() {
-      const select = document.getElementById("id_kamar");
-      const harga = Number(select.options[select.selectedIndex]?.dataset.harga || 0);
-      const dp = Number(document.getElementById("dp").value || 0);
-      const valIn = document.getElementById("check_in").value;
-      const valOut = document.getElementById("check_out").value;
-
-      if (harga && valIn && valOut) {
-        const tglIn = new Date(valIn);
-        const tglOut = new Date(valOut);
-
-        if (tglOut > tglIn) {
-          const malam = Math.round((tglOut - tglIn) / (1000 * 60 * 60 * 24));
-          const total = malam * harga;
-          const sisa = Math.max(total - dp, 0);
-
-          document.getElementById("tampil_total").textContent = total.toLocaleString('id-ID');
-          document.getElementById("tampil_sisa").textContent = sisa.toLocaleString('id-ID');
-          return total;
-        }
-      }
-
-      document.getElementById("tampil_total").textContent = "0";
-      document.getElementById("tampil_sisa").textContent = "0";
-      return 0;
-    }
-
-    document.getElementById("dp").addEventListener("input", hitungTotal);
-    document.getElementById("id_kamar").addEventListener("change", hitungTotal);
-	
-    document.getElementById("check_in").addEventListener("change", async () => {
-      const valIn = document.getElementById("check_in").value;
-      const inputOut = document.getElementById("check_out");
-      if (valIn) {
-        inputOut.setAttribute("min", valIn);
-        if (inputOut.value && inputOut.value < valIn) {
-          inputOut.value = valIn;
-        }
-      }
-      await segarkanKamarSesuaiTanggal();
-    });
-	
-    //document.getElementById("check_out").addEventListener("change", hitungTotal);
-	document.getElementById("check_out").addEventListener("change", async () => {
-      await segarkanKamarSesuaiTanggal();
-    });
-	
-    document.getElementById("formBooking").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const totalHarga = hitungTotal();
-      if (totalHarga <= 0) {
-        alert("Pastikan tanggal check-out lebih lambat dari check-in dan kamar sudah dipilih.");
-        return;
-      }
-
-      const statusEl = document.getElementById("status");
-      const btnSubmit = document.getElementById("btnSubmit");
-
+    if (statusEl) {
       statusEl.className = "";
       statusEl.textContent = "Memproses pesanan...";
-      btnSubmit.disabled = true;
+    }
+    btnSubmit.disabled = true;
 
-      const payload = {
-        action: "buat_reservasi",
-        nama_tamu: document.getElementById("nama_tamu").value.trim(),
-        no_hp: document.getElementById("no_hp").value.trim(),
-        id_kamar: document.getElementById("id_kamar").value,
-        check_in: document.getElementById("check_in").value,
-        check_out: document.getElementById("check_out").value,
-        total_harga: totalHarga,
-        dp: Number(document.getElementById("dp").value || 0),
-        receptionist: muatNamaReceptionist()
-      };
+    const payload = {
+      action: "buat_reservasi",
+      nama_tamu: document.getElementById("nama_tamu").value.trim(),
+      no_hp: document.getElementById("no_hp").value.trim(),
+      id_kamar: document.getElementById("id_kamar").value,
+      check_in: document.getElementById("check_in").value,
+      check_out: document.getElementById("check_out").value,
+      total_harga: totalHarga,
+      dp: Number(document.getElementById("dp").value || 0),
+      receptionist: muatNamaReceptionist()
+    };
 
-      try {
-        // Kirim sebagai text/plain JSON tanpa mode no-cors agar Apps Script menerima JSON utuh & mengembalikan respon
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
 
-        const hasil = await res.json();
+      const hasil = await res.json();
 
-        if (hasil.status === "success") {
+      if (hasil.status === "success") {
+        if (statusEl) {
           statusEl.className = "text-sukses";
           statusEl.textContent = `Reservasi berhasil! No Booking: ${hasil.id_booking || ''}`;
-          e.target.reset();
-          document.getElementById("tampil_total").textContent = "0";
-          document.getElementById("tampil_sisa").textContent = "0";
-          muatNamaReceptionist();
-          await muatKamar();
-        } else {
+        }
+        e.target.reset();
+        document.getElementById("tampil_total").textContent = "0";
+        document.getElementById("tampil_sisa").textContent = "0";
+        muatNamaReceptionist();
+        aturTanggalDefault();
+        await muatKamar();
+      } else {
+        if (statusEl) {
           statusEl.className = "text-gagal";
           statusEl.textContent = "Gagal mencatat reservasi: " + (hasil.message || "Terjadi kesalahan server");
         }
-      } catch (err) {
-        console.error(err);
+      }
+    } catch (err) {
+      console.error(err);
+      if (statusEl) {
         statusEl.className = "text-gagal";
         statusEl.textContent = "Terjadi kesalahan koneksi saat mengirim data.";
-      } finally {
-        btnSubmit.disabled = false;
       }
-    });
+    } finally {
+      btnSubmit.disabled = false;
+    }
+  });
 
-	const sesiAktif = cekSesiLoginAtauRedirect();
-  	if (sesiAktif) {
-		muatNamaReceptionist();
-        aturTanggalDefault();
-    	muatKamar();
-  	}
-
-   
-  </script>
+  const sesiAktif = cekSesiLoginAtauRedirect();
+  if (sesiAktif) {
+    muatNamaReceptionist();
+    aturTanggalDefault();
+    muatKamar();
+  }
+</script>
 </body>
 </html>
