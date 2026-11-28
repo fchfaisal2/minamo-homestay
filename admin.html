@@ -207,6 +207,62 @@
       .kwitansi-box { box-shadow: none; max-width: 100%; border: 1px solid #000; }
       .kwitansi-actions { display: none !important; }
     }
+
+	.session-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 10px;
+		padding: 10px 14px;
+		margin-bottom: 18px;
+		font-size: 13px;
+		color: #334155;
+	}
+	.session-info {
+	text-align: left;
+	line-height: 1.4;
+	}
+	.session-info strong {
+	color: #0f172a;
+	}
+	.btn-logout {
+	border: none;
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 13px;
+	font-weight: bold;
+	color: #ffffff;
+	background: #dc2626;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s ease, transform 0.15s ease;
+	}
+	.btn-logout:hover {
+	background: #b91c1c;
+	transform: translateY(-1px);
+	}
+	.btn-logout:disabled {
+	background: #94a3b8;
+	cursor: not-allowed;
+	transform: none;
+	}
+	.btn-home {
+	display: inline-block;
+	padding: 8px 12px;
+	background: #64748b;
+	color: #ffffff;
+	text-decoration: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: bold;
+	margin-right: 8px;
+	}
+	.btn-home:hover {
+	background: #475569;
+	}
   </style>
 </head>
 <body>
@@ -215,8 +271,11 @@
       <a href="menu.html" onclick="return bukaMenuUtama()" class="btn-home">← Menu Utama</a>
       <button class="btn-primary" onclick="refreshTanggalHariIni()">Refresh Data</button>
     </div>
-    <div class="receptionist-badge" onclick="gantiReceptionist()" title="Klik untuk mengubah nama receptionist">
-      Receptionist: <strong id="nama_receptionist">Petugas</strong>
+    <div id="sessionBar" class="session-bar" style="display: none;">
+      <span class="session-info">Akun: <strong id="label_user_aktif">-</strong></span>
+      <button type="button" id="btnLogout" class="btn-logout" onclick="logoutSistem()">
+        Keluar Sesi
+      </button>
     </div>
   </div>
 
@@ -359,7 +418,9 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiC918_2zY1MuNdjTVqX8bjZ4esYuUU9bi9fzHb8PDawLqueE9rJtg0bBB_aSHYQEC_w/exec";
-                       
+	const STORAGE_KEY_SESSION = "minamo_login_session";
+  	const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
+                      
 	const STORAGE_KEY_RECEPTIONIST = "minamo_receptionist_name";
     let dataReservasiTerakhir = [];
     let dataKamarTerakhir = [];
@@ -370,6 +431,78 @@
   		window.location.href = "menu.html";
   		return false;
 	}
+
+	function ambilSesiValid() {
+    try {
+      const mentah = sessionStorage.getItem(STORAGE_KEY_SESSION) || localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!mentah) return null;
+
+      const sesi = JSON.parse(mentah);
+      if (!sesi || sesi.loggedIn !== true || !String(sesi.user || "").trim()) {
+        return null;
+      }
+      return {
+        loggedIn: true,
+        user: String(sesi.user).trim(),
+        loginAt: sesi.loginAt || ""
+      };
+    } catch (err) {
+      console.warn("Gagal memeriksa sesi login:", err);
+      return null;
+    }
+  }
+
+  function perbaruiTampilanLogout(sesi) {
+    const barEl = document.getElementById("sessionBar");
+    const labelUserEl = document.getElementById("label_user_aktif");
+    const btnLogoutEl = document.getElementById("btnLogout");
+    const badgeReceptionistEl = document.getElementById("nama_receptionist");
+
+    if (sesi && sesi.loggedIn) {
+      if (barEl) barEl.style.display = "flex";
+      if (labelUserEl) labelUserEl.textContent = sesi.user;
+      if (btnLogoutEl) {
+        btnLogoutEl.disabled = false;
+        btnLogoutEl.textContent = "Keluar Sesi";
+      }
+      localStorage.setItem(STORAGE_KEY_RECEPTIONIST, sesi.user);
+      if (badgeReceptionistEl) badgeReceptionistEl.textContent = sesi.user;
+    } else {
+      if (barEl) barEl.style.display = "none";
+      if (btnLogoutEl) btnLogoutEl.disabled = true;
+    }
+  }
+
+  function cekSesiLoginAtauRedirect() {
+    const sesi = ambilSesiValid();
+    if (!sesi) {
+      window.location.href = "login.html";
+      return null;
+    }
+    perbaruiTampilanLogout(sesi);
+    return sesi;
+  }
+
+  function logoutSistem() {
+    const sesi = ambilSesiValid();
+    if (!sesi) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const konfirmasi = confirm(`Keluar dari akun "${sesi.user}"?`);
+    if (!konfirmasi) return;
+
+    const btnLogoutEl = document.getElementById("btnLogout");
+    if (btnLogoutEl) {
+      btnLogoutEl.disabled = true;
+      btnLogoutEl.textContent = "Keluar...";
+    }
+
+    sessionStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    window.location.href = "login.html";
+  }
 
     function getTanggalHariIniYMD() {
       const sekarang = new Date();
@@ -912,9 +1045,12 @@
       }
     }
 
-    muatNamaReceptionist();
-	aturTanggalFilterDefault();
-    muatData();
+    const sesiAktif = cekSesiLoginAtauRedirect();
+	if (sesiAktif) {
+		
+		aturTanggalFilterDefault();
+		muatData();
+	}
   </script>
 </body>
 </html>
